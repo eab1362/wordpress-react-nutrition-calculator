@@ -12,184 +12,215 @@ import MenuItem from '@mui/material/MenuItem';
 // Importar estilos
 import './style.css';
 
-// Opciones de selección basadas en el modelo Django
-const BODY_IMAGES = [
-  { value: 'muy_delgado', label: 'Muy delgado' },
-  { value: 'delgado', label: 'Delgado' },
-  { value: 'peso_ideal', label: 'Peso ideal' },
-  { value: 'sobrepeso', label: 'Sobrepeso' },
+// Tabla de factores nutricionales (configurable desde WordPress Admin)
+const DEFAULT_NUTRITION_FACTORS = {
+  'Cachorro-Muy delgado-Castrado-Sedentario': 1.9,
+  'Cachorro-Muy delgado-Castrado-Activo': 2.3,
+  'Cachorro-Muy delgado-Castrado-Muy activo': 2.6,
+  'Cachorro-Muy delgado-Entero-Sedentario': 2.1,
+  'Cachorro-Muy delgado-Entero-Activo': 2.5,
+  'Cachorro-Muy delgado-Entero-Muy activo': 2.8,
+  'Cachorro-Delgado-Castrado-Sedentario': 1.7,
+  'Cachorro-Delgado-Castrado-Activo': 1.8,
+  'Cachorro-Delgado-Castrado-Muy activo': 2.0,
+  'Cachorro-Delgado-Entero-Sedentario': 1.7,
+  'Cachorro-Delgado-Entero-Activo': 1.8,
+  'Cachorro-Delgado-Entero-Muy activo': 2.0,
+  'Cachorro-Normal-Castrado-Sedentario': 1.4,
+  'Cachorro-Normal-Castrado-Activo': 1.5,
+  'Cachorro-Normal-Castrado-Muy activo': 1.6,
+  'Cachorro-Normal-Entero-Sedentario': 1.5,
+  'Cachorro-Normal-Entero-Activo': 1.6,
+  'Cachorro-Normal-Entero-Muy activo': 1.8,
+  'Cachorro-Obeso-Castrado-Sedentario': 1.2,
+  'Cachorro-Obeso-Castrado-Activo': 1.7,
+  'Cachorro-Obeso-Castrado-Muy activo': 1.9,
+  'Cachorro-Obeso-Entero-Sedentario': 1.4,
+  'Cachorro-Obeso-Entero-Activo': 1.9,
+  'Cachorro-Obeso-Entero-Muy activo': 2.1,
+  'Adulto-Muy delgado-Castrado-Sedentario': 1.4,
+  'Adulto-Muy delgado-Castrado-Activo': 1.8,
+  'Adulto-Muy delgado-Castrado-Muy activo': 2.1,
+  'Adulto-Muy delgado-Entero-Sedentario': 1.6,
+  'Adulto-Muy delgado-Entero-Activo': 2.0,
+  'Adulto-Muy delgado-Entero-Muy activo': 2.3,
+  'Adulto-Delgado-Castrado-Sedentario': 1.3,
+  'Adulto-Delgado-Castrado-Activo': 1.6,
+  'Adulto-Delgado-Castrado-Muy activo': 1.8,
+  'Adulto-Delgado-Entero-Sedentario': 1.5,
+  'Adulto-Delgado-Entero-Activo': 1.8,
+  'Adulto-Delgado-Entero-Muy activo': 2.0,
+  'Adulto-Normal-Castrado-Sedentario': 1.4,
+  'Adulto-Normal-Castrado-Activo': 1.5,
+  'Adulto-Normal-Castrado-Muy activo': 1.7,
+  'Adulto-Normal-Entero-Sedentario': 1.4,
+  'Adulto-Normal-Entero-Activo': 1.7,
+  'Adulto-Normal-Entero-Muy activo': 1.8,
+  'Adulto-Obeso-Castrado-Sedentario': 1.1,
+  'Adulto-Obeso-Castrado-Activo': 1.2,
+  'Adulto-Obeso-Castrado-Muy activo': 1.3,
+  'Adulto-Obeso-Entero-Sedentario': 1.2,
+  'Adulto-Obeso-Entero-Activo': 1.3,
+  'Adulto-Obeso-Entero-Muy activo': 1.4,
+  'Senior-Muy delgado-Castrado-Sedentario': 1.3,
+  'Senior-Muy delgado-Castrado-Activo': 1.7,
+  'Senior-Muy delgado-Castrado-Muy activo': 2.0,
+  'Senior-Muy delgado-Entero-Sedentario': 1.5,
+  'Senior-Muy delgado-Entero-Activo': 1.9,
+  'Senior-Muy delgado-Entero-Muy activo': 2.2,
+  'Senior-Delgado-Castrado-Sedentario': 1.3,
+  'Senior-Delgado-Castrado-Activo': 1.4,
+  'Senior-Delgado-Castrado-Muy activo': 1.7,
+  'Senior-Delgado-Entero-Sedentario': 1.3,
+  'Senior-Delgado-Entero-Activo': 1.7,
+  'Senior-Delgado-Entero-Muy activo': 1.9,
+  'Senior-Normal-Castrado-Sedentario': 1.3,
+  'Senior-Normal-Castrado-Activo': 1.4,
+  'Senior-Normal-Castrado-Muy activo': 1.5,
+  'Senior-Normal-Entero-Sedentario': 1.2,
+  'Senior-Normal-Entero-Activo': 1.5,
+  'Senior-Normal-Entero-Muy activo': 1.7,
+  'Senior-Obeso-Castrado-Sedentario': 1.1,
+  'Senior-Obeso-Castrado-Activo': 1.2,
+  'Senior-Obeso-Castrado-Muy activo': 1.3,
+  'Senior-Obeso-Entero-Sedentario': 1.2,
+  'Senior-Obeso-Entero-Activo': 1.3,
+  'Senior-Obeso-Entero-Muy activo': 1.4
+};
+
+// Opciones de selección
+const BODY_CONDITIONS = [
+  { value: 'Muy delgado', label: 'Muy delgado' },
+  { value: 'Delgado', label: 'Delgado' },
+  { value: 'Normal', label: 'Normal' },
+  { value: 'Obeso', label: 'Obeso' },
 ];
 
 const REPRODUCTIVE_STATES = [
-  { value: 'castrado', label: 'Castrado' },
-  { value: 'entero', label: 'Entero' },
-];
-
-const ALLERGIES_DATA = [
-  { value: 'Ninguna', label: 'Ninguna' },
-  { value: 'Pollo', label: 'Pollo' },
-  { value: 'Res', label: 'Res' },
-  { value: 'Cerdo', label: 'Cerdo' },
-  { value: 'Granos', label: 'Granos' },
-  { value: 'Huevo', label: 'Huevo' },
-  { value: 'Otro', label: 'Otro' },
-  { value: 'Pescado', label: 'Pescado' },
-];
-
-const SPECIAL_NEEDS_DATA = [
-  { value: 'Ninguna', label: 'Ninguna' },
-  { value: 'Digestión', label: 'Digestión' },
-  { value: 'Piel', label: 'Piel' },
-  { value: 'Control de peso', label: 'Control de peso' },
-  { value: 'Cardiovascular', label: 'Cardiovascular' },
-  { value: 'Ariticulaciones', label: 'Ariticulaciones' },
-  { value: 'Urinario-renal', label: 'Urinario-renal' },
-  { value: 'Aliento', label: 'Aliento' },
-  { value: 'Ansiedad', label: 'Ansiedad' },
-  { value: 'Hiperactividad', label: 'Hiperactividad' },
-  { value: 'Cancer', label: 'Cancer' },
-  { value: 'Diabetes', label: 'Diabetes' },
-  { value: 'Ganancia de peso', label: 'Ganancia de peso' },
-];
-
-const AGE_TYPES = [
-  { value: 'meses', label: 'Meses' },
-  { value: 'años', label: 'Años' },
+  { value: 'Castrado', label: 'Castrado' },
+  { value: 'Entero', label: 'Entero' },
 ];
 
 const ACTIVITY_LEVELS = [
-  { value: 'baja', label: 'Baja' },
-  { value: 'moderada', label: 'Moderada' },
-  { value: 'alta', label: 'Alta' },
+  { value: 'Sedentario', label: 'Sedentario' },
+  { value: 'Activo', label: 'Activo' },
+  { value: 'Muy activo', label: 'Muy activo' },
 ];
 
-// Componente React para el formulario de mascotas
-const PetFormBlock = () => {
-  // Control del paso actual
-  const [step, setStep] = useState(1);
-  const totalSteps = 3;
-
+// Componente React para el calculador nutricional
+const NutritionCalculatorBlock = () => {
+  // Estado para los factores nutricionales (configurable desde WordPress)
+  const [nutritionFactors, setNutritionFactors] = useState(DEFAULT_NUTRITION_FACTORS);
+  
   // Estado para la lista de razas
   const [dogBreeds, setDogBreeds] = useState([]);
-  const [filteredBreeds, setFilteredBreeds] = useState([]);
-  const [breedSearch, setBreedSearch] = useState('');
   const [isLoadingBreeds, setIsLoadingBreeds] = useState(true);
 
   // Estado para manejar carga y mensajes
-  const [isSubmitting, setIsSubmitting] = useState(false);
-  const [responseMessage, setResponseMessage] = useState(null);
-  const [isSuccess, setIsSuccess] = useState(false);
+  const [isCalculating, setIsCalculating] = useState(false);
+  const [calculationResult, setCalculationResult] = useState(null);
+  const [showResult, setShowResult] = useState(false);
 
   // Datos del formulario
   const [formData, setFormData] = useState({
-    name: '',
-    age: '',
-    age_type: 'años',
+    petName: '',
     breed: '',
-    body_image: '',
-    reproductive_state: '',
-    activity_level: '',
+    ageYears: '',
+    ageMonths: '',
+    bodyCondition: '',
+    reproductiveState: '',
+    activityLevel: '',
     weight: '',
-    allergies: 'Ninguna',
-    special_needs: 'Ninguna',
-    email: '',
     ownerName: '',
+    email: ''
   });
 
   // Estado para errores de validación
-  const [errors, setErrors] = useState({
-    name: '',
-    age: '',
-    breed: '',
-    body_image: '',
-    reproductive_state: '',
-    activity_level: '',
-    weight: '',
-    email: '',
-    ownerName: '',
-  });
+  const [errors, setErrors] = useState({});
+  const [touched, setTouched] = useState({});
 
-  // Estado para controlar si un campo ha sido tocado
-  const [touched, setTouched] = useState({
-    name: false,
-    age: false,
-    breed: false,
-    body_image: false,
-    reproductive_state: false,
-    activity_level: false,
-    weight: false,
-    email: false,
-    ownerName: false,
-  });
-
-  // Cargar la lista de razas al iniciar el componente
+  // Cargar datos al iniciar el componente
   useEffect(() => {
-    // Primero intentamos obtener las razas desde la variable global (si estamos en el editor)
+    // Cargar factores nutricionales desde WordPress (si están configurados)
+    apiFetch({ path: '/nutrition-calculator/v1/factors' })
+      .then(factors => {
+        if (factors && Object.keys(factors).length > 0) {
+          setNutritionFactors(factors);
+        }
+      })
+      .catch(error => {
+        console.log('Usando factores por defecto:', error);
+      });
+
+    // Cargar lista de razas
     if (typeof petFormSettings !== 'undefined' && petFormSettings.dogBreeds) {
       setDogBreeds(petFormSettings.dogBreeds);
-      setFilteredBreeds(petFormSettings.dogBreeds);
       setIsLoadingBreeds(false);
     } else {
-      // Si no está disponible, hacer una petición a la API REST
       apiFetch({ path: '/pet-form/v1/breeds' })
         .then(breeds => {
           setDogBreeds(breeds);
-          setFilteredBreeds(breeds);
           setIsLoadingBreeds(false);
         })
         .catch(error => {
           console.error('Error al cargar razas:', error);
-          // En caso de error, establecer algunas razas predeterminadas
           const defaultBreeds = [
             { value: 'labrador', label: 'Labrador Retriever' },
             { value: 'golden', label: 'Golden Retriever' },
+            { value: 'mixto', label: 'Raza mixta' },
             { value: 'otro', label: 'Otro' }
           ];
           setDogBreeds(defaultBreeds);
-          setFilteredBreeds(defaultBreeds);
           setIsLoadingBreeds(false);
         });
     }
   }, []);
 
-  // Filtrar razas cuando se cambia la búsqueda
-  useEffect(() => {
-    if (breedSearch.trim() === '') {
-      setFilteredBreeds(dogBreeds);
+  // Función para determinar la etapa de vida basada en la edad
+  const getLifeStage = (years, months) => {
+    const totalMonths = (parseInt(years) || 0) * 12 + (parseInt(months) || 0);
+    
+    if (totalMonths <= 12) {
+      return 'Cachorro';
+    } else if (totalMonths <= 96) { // 8 años
+      return 'Adulto';
     } else {
-      const searchTerm = breedSearch.toLowerCase();
-      const filtered = dogBreeds.filter(breed => 
-        breed.label.toLowerCase().includes(searchTerm)
-      );
-      setFilteredBreeds(filtered);
+      return 'Senior';
     }
-  }, [breedSearch, dogBreeds]);
-
-  // Función para manejar la búsqueda de razas
-  const handleBreedSearch = (event) => {
-    setBreedSearch(event.target.value);
   };
 
-  // Función para actualizar datos
+  // Función para obtener el factor nutricional
+  const getNutritionFactor = (lifeStage, bodyCondition, reproductiveState, activityLevel) => {
+    const key = `${lifeStage}-${bodyCondition}-${reproductiveState}-${activityLevel}`;
+    return nutritionFactors[key] || null;
+  };
+
+  // Función para calcular la ración diaria
+  const calculateDailyNutrition = (weight, factor) => {
+    // Fórmula: (Peso^0.75 × 70 × Factor) / 1.5
+    const result = (Math.pow(parseFloat(weight), 0.75) * 70 * factor) / 1.5;
+    return Math.round(result * 100) / 100; // Redondear a 2 decimales
+  };
+
+  // Función para manejar cambios en el formulario
   const handleChange = (field, value) => {
     setFormData({ ...formData, [field]: value });
     
-    // Validar el campo cuando cambia
-    validateField(field, value);
+    // Limpiar error cuando el usuario modifica el campo
+    if (errors[field]) {
+      setErrors({ ...errors, [field]: '' });
+    }
     
-    // Reset de mensajes al modificar el formulario
-    if (responseMessage) {
-      setResponseMessage(null);
-      setIsSuccess(false);
+    // Limpiar resultado anterior si existe
+    if (calculationResult) {
+      setCalculationResult(null);
+      setShowResult(false);
     }
   };
 
-  // Marcar campo como tocado cuando pierde el foco
+  // Función para marcar campo como tocado
   const handleBlur = (field) => {
-    setTouched({
-      ...touched,
-      [field]: true
-    });
+    setTouched({ ...touched, [field]: true });
     validateField(field, formData[field]);
   };
 
@@ -198,76 +229,78 @@ const PetFormBlock = () => {
     let errorMessage = '';
     
     switch (field) {
-      case 'name':
+      case 'petName':
         if (!value.trim()) {
-          errorMessage = __('El nombre de la mascota es obligatorio', 'mi-block');
+          errorMessage = __('El nombre de la mascota es obligatorio', 'nutrition-calculator');
         } else if (value.trim().length < 2) {
-          errorMessage = __('El nombre debe tener al menos 2 caracteres', 'mi-block');
-        } else if (value.trim().length > 50) {
-          errorMessage = __('El nombre no puede exceder los 50 caracteres', 'mi-block');
+          errorMessage = __('El nombre debe tener al menos 2 caracteres', 'nutrition-calculator');
         }
         break;
         
       case 'breed':
         if (!value) {
-          errorMessage = __('Seleccione una raza', 'mi-block');
+          errorMessage = __('Seleccione una raza', 'nutrition-calculator');
         }
         break;
         
-      case 'age':
-        if (!value) {
-          errorMessage = __('La edad es obligatoria', 'mi-block');
-        } else if (isNaN(value) || parseInt(value) < 0) {
-          errorMessage = __('La edad debe ser un número positivo', 'mi-block');
-        } else if (formData.age_type === 'años' && parseInt(value) > 25) {
-          errorMessage = __('La edad parece demasiado alta para un perro', 'mi-block');
-        } else if (formData.age_type === 'meses' && parseInt(value) > 24) {
-          errorMessage = __('Para edades mayores a 24 meses, use años', 'mi-block');
+      case 'ageYears':
+        if (!value && !formData.ageMonths) {
+          errorMessage = __('Debe especificar al menos años o meses', 'nutrition-calculator');
+        } else if (value && (isNaN(value) || parseInt(value) < 0)) {
+          errorMessage = __('Los años deben ser un número positivo', 'nutrition-calculator');
+        } else if (value && parseInt(value) > 25) {
+          errorMessage = __('La edad parece demasiado alta para un perro', 'nutrition-calculator');
+        }
+        break;
+        
+      case 'ageMonths':
+        if (!formData.ageYears && !value) {
+          errorMessage = __('Debe especificar al menos años o meses', 'nutrition-calculator');
+        } else if (value && (isNaN(value) || parseInt(value) < 0 || parseInt(value) > 11)) {
+          errorMessage = __('Los meses deben ser entre 0 y 11', 'nutrition-calculator');
         }
         break;
         
       case 'weight':
         if (!value) {
-          errorMessage = __('El peso es obligatorio', 'mi-block');
+          errorMessage = __('El peso es obligatorio', 'nutrition-calculator');
         } else if (isNaN(value) || parseFloat(value) <= 0) {
-          errorMessage = __('El peso debe ser un número positivo', 'mi-block');
+          errorMessage = __('Peso inválido', 'nutrition-calculator');
         } else if (parseFloat(value) > 100) {
-          errorMessage = __('El peso parece demasiado alto para un perro', 'mi-block');
+          errorMessage = __('El peso parece demasiado alto para un perro', 'nutrition-calculator');
         }
         break;
         
-      case 'body_image':
+      case 'bodyCondition':
         if (!value) {
-          errorMessage = __('Seleccione la condición corporal', 'mi-block');
+          errorMessage = __('Seleccione la condición física', 'nutrition-calculator');
         }
         break;
         
-      case 'reproductive_state':
+      case 'reproductiveState':
         if (!value) {
-          errorMessage = __('Seleccione el estado reproductivo', 'mi-block');
+          errorMessage = __('Seleccione el estado reproductivo', 'nutrition-calculator');
         }
         break;
         
-      case 'activity_level':
+      case 'activityLevel':
         if (!value) {
-          errorMessage = __('Seleccione el nivel de actividad', 'mi-block');
+          errorMessage = __('Seleccione el nivel de actividad', 'nutrition-calculator');
+        }
+        break;
+        
+      case 'ownerName':
+        if (!value.trim()) {
+          errorMessage = __('Su nombre es obligatorio', 'nutrition-calculator');
         }
         break;
         
       case 'email':
         const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
         if (!value.trim()) {
-          errorMessage = __('El email es obligatorio', 'mi-block');
+          errorMessage = __('El email es obligatorio', 'nutrition-calculator');
         } else if (!emailRegex.test(value)) {
-          errorMessage = __('Ingrese un email válido', 'mi-block');
-        }
-        break;
-        
-      case 'ownerName':
-        if (!value.trim()) {
-          errorMessage = __('Su nombre es obligatorio', 'mi-block');
-        } else if (value.trim().length < 2) {
-          errorMessage = __('El nombre debe tener al menos 2 caracteres', 'mi-block');
+          errorMessage = __('Ingrese un email válido', 'nutrition-calculator');
         }
         break;
         
@@ -275,459 +308,417 @@ const PetFormBlock = () => {
         break;
     }
     
-    setErrors(prev => ({
-      ...prev,
-      [field]: errorMessage
-    }));
-    
+    setErrors(prev => ({ ...prev, [field]: errorMessage }));
     return errorMessage === '';
   };
 
-  // Validar todos los campos del paso actual
-  const validateStep = (currentStep) => {
+  // Función para validar todo el formulario
+  const validateForm = () => {
+    const requiredFields = [
+      'petName', 'breed', 'weight', 'bodyCondition', 
+      'reproductiveState', 'activityLevel', 'ownerName', 'email'
+    ];
+    
+    // Validar edad (al menos años o meses)
+    if (!formData.ageYears && !formData.ageMonths) {
+      setErrors(prev => ({ 
+        ...prev, 
+        ageYears: __('Debe especificar al menos años o meses', 'nutrition-calculator') 
+      }));
+      setTouched(prev => ({ ...prev, ageYears: true }));
+      return false;
+    }
+    
     let isValid = true;
-    let newErrors = { ...errors };
-    let newTouched = { ...touched };
+    const newTouched = { ...touched };
     
-    // Campos a validar según el paso
-    const fieldsToValidate = {
-      1: ['name', 'breed', 'age', 'weight'],
-      2: ['body_image', 'reproductive_state', 'activity_level'],
-      3: ['email', 'ownerName'],
-    };
-    
-    // Validar cada campo del paso actual
-    fieldsToValidate[currentStep].forEach(field => {
+    requiredFields.forEach(field => {
       newTouched[field] = true;
       if (!validateField(field, formData[field])) {
         isValid = false;
       }
     });
     
+    // Validar edad específicamente
+    if (!validateField('ageYears', formData.ageYears) || 
+        !validateField('ageMonths', formData.ageMonths)) {
+      isValid = false;
+      newTouched.ageYears = true;
+      newTouched.ageMonths = true;
+    }
+    
     setTouched(newTouched);
     return isValid;
   };
 
-  // Navegación de pasos
-  const nextStep = () => {
-    // Solo avanzar si todos los campos del paso actual son válidos
-    if (validateStep(step)) {
-      setStep(step + 1);
-    }
-  };
-  
-  const prevStep = () => setStep(step - 1);
-
-  // Función para enviar el formulario
-  const handleSubmit = async (e) => {
+  // Función para calcular el valor nutricional
+  const handleCalculate = async (e) => {
     e.preventDefault();
     
-    // Validación final de todos los campos
-    if (!validateStep(3)) {
-      setResponseMessage(__('Por favor, corrija los errores antes de enviar.', 'mi-block'));
+    // Validar formulario
+    if (!validateForm()) {
       return;
     }
     
-    setIsSubmitting(true);
-    setResponseMessage(__('Enviando información...', 'mi-block'));
+    setIsCalculating(true);
     
     try {
-      // Enviar datos a la API REST
-      const response = await apiFetch({
-        path: '/pet-form/v1/submit',
-        method: 'POST',
-        data: formData,
-      });
+      // Determinar etapa de vida
+      const lifeStage = getLifeStage(formData.ageYears, formData.ageMonths);
       
-      // Procesar respuesta exitosa
-      setIsSuccess(true);
-      setResponseMessage(__('¡Gracias! Hemos recibido tu información. Te enviaremos la dieta recomendada pronto.', 'mi-block'));
+      // Obtener factor nutricional
+      const factor = getNutritionFactor(
+        lifeStage, 
+        formData.bodyCondition, 
+        formData.reproductiveState, 
+        formData.activityLevel
+      );
       
-      // En entorno de desarrollo, mostrar los datos
-      if (process.env.NODE_ENV === 'development') {
-        console.log('Datos enviados:', formData);
-        console.log('Respuesta:', response);
+      if (!factor) {
+        setErrors({ 
+          ...errors, 
+          general: __('No se encontró un factor nutricional para esta combinación', 'nutrition-calculator') 
+        });
+        setIsCalculating(false);
+        return;
       }
       
-      // Reset form after successful submission
-      setTimeout(() => {
-        setFormData({
-          name: '',
-          age: '',
-          age_type: 'años',
-          breed: '',
-          body_image: '',
-          reproductive_state: '',
-          activity_level: '',
-          weight: '',
-          allergies: 'Ninguna',
-          special_needs: 'Ninguna',
-          email: '',
-          ownerName: '',
-        });
-        setStep(1);
-        setResponseMessage(null);
-        setTouched({});
-        setErrors({});
-      }, 5000);
+      // Calcular ración diaria
+      const dailyNutrition = calculateDailyNutrition(formData.weight, factor);
+      
+      // Preparar resultado
+      const result = {
+        petName: formData.petName,
+        lifeStage,
+        factor,
+        dailyNutrition,
+        weight: parseFloat(formData.weight),
+        bodyCondition: formData.bodyCondition,
+        reproductiveState: formData.reproductiveState,
+        activityLevel: formData.activityLevel
+      };
+      
+      setCalculationResult(result);
+      setShowResult(true);
+      
+      // Enviar datos a WordPress (opcional, para tracking)
+      await apiFetch({
+        path: '/nutrition-calculator/v1/calculate',
+        method: 'POST',
+        data: {
+          ...formData,
+          lifeStage,
+          factor,
+          dailyNutrition
+        }
+      }).catch(error => {
+        console.log('Error enviando datos (opcional):', error);
+      });
       
     } catch (error) {
-      // Manejar error
-      setIsSuccess(false);
-      setResponseMessage(__('Ocurrió un error al enviar el formulario. Por favor, intenta de nuevo.', 'mi-block'));
-      console.error('Error al enviar formulario:', error);
+      console.error('Error en el cálculo:', error);
+      setErrors({ 
+        ...errors, 
+        general: __('Ocurrió un error al calcular. Por favor, intenta de nuevo.', 'nutrition-calculator') 
+      });
     } finally {
-      setIsSubmitting(false);
+      setIsCalculating(false);
     }
   };
 
-  // Si se ha enviado con éxito, mostrar mensaje de agradecimiento
-  if (isSuccess && responseMessage) {
+  // Función para resetear el formulario
+  const resetForm = () => {
+    setFormData({
+      petName: '',
+      breed: '',
+      ageYears: '',
+      ageMonths: '',
+      bodyCondition: '',
+      reproductiveState: '',
+      activityLevel: '',
+      weight: '',
+      ownerName: '',
+      email: ''
+    });
+    setErrors({});
+    setTouched({});
+    setCalculationResult(null);
+    setShowResult(false);
+  };
+
+  // Si se muestra el resultado
+  if (showResult && calculationResult) {
     return (
-      <div className="pet-form-container">
-        <div className="form-success-message">
-          <h3>{__('¡Formulario enviado con éxito!', 'mi-block')}</h3>
-          <p>{responseMessage}</p>
+      <div className="nutrition-calculator-container">
+        <div className="calculation-result">
+          <div className="result-header">
+            <h3>{__('Resultado del Cálculo Nutricional', 'nutrition-calculator')}</h3>
+            <div className="pet-info">
+              <h4>{calculationResult.petName}</h4>
+              <p>{__('Categoría:', 'nutrition-calculator')} <strong>{calculationResult.lifeStage}</strong></p>
+            </div>
+          </div>
+          
+          <div className="result-details">
+            <div className="result-card">
+              <div className="daily-nutrition">
+                <span className="label">{__('Ración diaria recomendada:', 'nutrition-calculator')}</span>
+                <span className="value">{calculationResult.dailyNutrition} g</span>
+              </div>
+              
+              <div className="calculation-info">
+                <h5>{__('Parámetros utilizados:', 'nutrition-calculator')}</h5>
+                <ul>
+                  <li>{__('Peso:', 'nutrition-calculator')} {calculationResult.weight} kg</li>
+                  <li>{__('Etapa de vida:', 'nutrition-calculator')} {calculationResult.lifeStage}</li>
+                  <li>{__('Condición física:', 'nutrition-calculator')} {calculationResult.bodyCondition}</li>
+                  <li>{__('Estado reproductivo:', 'nutrition-calculator')} {calculationResult.reproductiveState}</li>
+                  <li>{__('Actividad física:', 'nutrition-calculator')} {calculationResult.activityLevel}</li>
+                  <li>{__('Factor aplicado:', 'nutrition-calculator')} {calculationResult.factor}</li>
+                </ul>
+              </div>
+              
+              <div className="formula-info">
+                <h5>{__('Fórmula aplicada:', 'nutrition-calculator')}</h5>
+                <p><code>(Peso^0.75 × 70 × Factor) / 1.5</code></p>
+                <p><code>({calculationResult.weight}^0.75 × 70 × {calculationResult.factor}) / 1.5 = {calculationResult.dailyNutrition} g</code></p>
+              </div>
+            </div>
+          </div>
+          
+          <div className="result-actions">
+            <button type="button" className="btn btn-secondary" onClick={resetForm}>
+              {__('Calcular para otra mascota', 'nutrition-calculator')}
+            </button>
+          </div>
         </div>
       </div>
     );
   }
 
   return (
-    <div className="pet-form-container">
-      <form onSubmit={handleSubmit}>
-        {/* Paso 1: Información básica */}
-        <div className={`form-step ${step === 1 ? 'active' : ''}`}>
-          <div className="form-header">
-            <h3>{ __('Información básica de tu mascota', 'mi-block') }</h3>
-            <p>{ __('Ayúdanos a conocer a tu Forever Dog', 'mi-block') }</p>
-          </div>
-          <span className="step-indicator">{step} de {totalSteps}</span>
+    <div className="nutrition-calculator-container">
+      <form onSubmit={handleCalculate}>
+        <div className="form-header">
+          <h3>{__('Calculadora de Valor Diario Nutricional', 'nutrition-calculator')}</h3>
+          <p>{__('Calcula la ración diaria recomendada para tu mascota', 'nutrition-calculator')}</p>
+        </div>
 
-          <div className={`form-group ${touched.name && errors.name ? 'has-error' : ''}`}>
-            <label htmlFor="name">{ __('Nombre de tu mascota', 'mi-block') }</label>
+        {errors.general && (
+          <div className="form-message error">
+            <p>{errors.general}</p>
+          </div>
+        )}
+
+        {/* Información básica de la mascota */}
+        <div className="form-section">
+          <h4>{__('Información de la mascota', 'nutrition-calculator')}</h4>
+          
+          <div className={`form-group ${touched.petName && errors.petName ? 'has-error' : ''}`}>
+            <label htmlFor="petName">{__('Nombre de la mascota *', 'nutrition-calculator')}</label>
             <input
               type="text"
-              id="name"
-              value={formData.name}
-              onChange={(e) => handleChange('name', e.target.value)}
-              onBlur={() => handleBlur('name')}
-              required
+              id="petName"
+              value={formData.petName}
+              onChange={(e) => handleChange('petName', e.target.value)}
+              onBlur={() => handleBlur('petName')}
+              placeholder={__('Nombre de tu perro', 'nutrition-calculator')}
             />
-            {touched.name && errors.name && <span className="error-message">{errors.name}</span>}
+            {touched.petName && errors.petName && <span className="error-message">{errors.petName}</span>}
           </div>
 
           <div className={`form-group ${touched.breed && errors.breed ? 'has-error' : ''}`}>
-            <label htmlFor="breed">{ __('Raza', 'mi-block') }</label>
-            <Autocomplete
+            <label htmlFor="breed">{__('Raza *', 'nutrition-calculator')}</label>
+            <select
               id="breed"
-              options={dogBreeds}
-              getOptionLabel={(option) => option.label || ''}
-              loading={isLoadingBreeds}
-              value={dogBreeds.find(b => b.value === formData.breed) || null}
-              onChange={(_, newValue) => {
-                handleChange('breed', newValue ? newValue.value : '');
-                setTouched({ ...touched, breed: true });
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label={__('Buscar y seleccionar raza...', 'mi-block')}
-                  variant="outlined"
-                  error={touched.breed && Boolean(errors.breed)}
-                  helperText={touched.breed && errors.breed ? errors.breed : ''}
-                  required
-                />
-              )}
-              isOptionEqualToValue={(option, value) => option.value === value.value}
-              noOptionsText={__('No se encontraron razas', 'mi-block')}
+              value={formData.breed}
+              onChange={(e) => handleChange('breed', e.target.value)}
+              onBlur={() => handleBlur('breed')}
               disabled={isLoadingBreeds}
-            />
+            >
+              <option value="">{__('Selecciona la raza...', 'nutrition-calculator')}</option>
+              {dogBreeds.map(breed => (
+                <option key={breed.value} value={breed.value}>
+                  {breed.label}
+                </option>
+              ))}
+            </select>
+            {touched.breed && errors.breed && <span className="error-message">{errors.breed}</span>}
           </div>
 
-          <div className={`form-row`}>
-            <div className={`form-group ${touched.age && errors.age ? 'has-error' : ''}`}>
-              <TextField
-                id="age"
-                label={__('Edad', 'mi-block')}
+          <div className="form-row">
+            <div className={`form-group ${touched.ageYears && errors.ageYears ? 'has-error' : ''}`}>
+              <label htmlFor="ageYears">{__('Edad - Años', 'nutrition-calculator')}</label>
+              <input
                 type="number"
-                value={formData.age}
-                onChange={(e) => handleChange('age', e.target.value)}
-                onBlur={() => handleBlur('age')}
-                required
-                error={touched.age && Boolean(errors.age)}
-                helperText={touched.age && errors.age ? errors.age : ''}
-                variant="outlined"
-                fullWidth
-                InputProps={{
-                  inputProps: { min: 0 },
-                }}
+                id="ageYears"
+                min="0"
+                max="25"
+                value={formData.ageYears}
+                onChange={(e) => handleChange('ageYears', e.target.value)}
+                onBlur={() => handleBlur('ageYears')}
+                placeholder="0"
               />
+              {touched.ageYears && errors.ageYears && <span className="error-message">{errors.ageYears}</span>}
             </div>
 
-            <div className="form-group">
-              <FormControl 
-                fullWidth 
-                variant="outlined"
-                error={touched.age_type && Boolean(errors.age_type)}
-                style={{ width: '100%' }}
-              >
-                <InputLabel id="age_type-label">{ __('Tipo', 'mi-block') }</InputLabel>
-                <Select
-                  labelId="age_type-label"
-                  id="age_type"
-                  value={formData.age_type}
-                  label={__('Tipo', 'mi-block')}
-                  onChange={(e) => {
-                    handleChange('age_type', e.target.value);
-                    // Revalidar la edad cuando cambia el tipo
-                    validateField('age', formData.age);
-                  }}
-                  required
-                  onBlur={() => handleBlur('age_type')}
-                >
-                  {AGE_TYPES.map(option => (
-                    <MenuItem key={option.value} value={option.value}>
-                      {option.label}
-                    </MenuItem>
-                  ))}
-                </Select>
-                {touched.age_type && errors.age_type && <span className="error-message">{errors.age_type}</span>}
-              </FormControl>
+            <div className={`form-group ${touched.ageMonths && errors.ageMonths ? 'has-error' : ''}`}>
+              <label htmlFor="ageMonths">{__('Edad - Meses', 'nutrition-calculator')}</label>
+              <input
+                type="number"
+                id="ageMonths"
+                min="0"
+                max="11"
+                value={formData.ageMonths}
+                onChange={(e) => handleChange('ageMonths', e.target.value)}
+                onBlur={() => handleBlur('ageMonths')}
+                placeholder="0"
+              />
+              {touched.ageMonths && errors.ageMonths && <span className="error-message">{errors.ageMonths}</span>}
             </div>
           </div>
 
           <div className={`form-group ${touched.weight && errors.weight ? 'has-error' : ''}`}>
-            <label htmlFor="weight">{ __('Peso (kg)', 'mi-block') }</label>
+            <label htmlFor="weight">{__('Peso (kg) *', 'nutrition-calculator')}</label>
             <input
               type="number"
               id="weight"
-              step="0.01"
-              min="0"
+              step="0.1"
+              min="0.1"
+              max="100"
               value={formData.weight}
               onChange={(e) => handleChange('weight', e.target.value)}
               onBlur={() => handleBlur('weight')}
-              required
+              placeholder="0.0"
             />
             {touched.weight && errors.weight && <span className="error-message">{errors.weight}</span>}
           </div>
+        </div>
 
-          <div className="button-row">
-            <button 
-              type="button" 
-              className="btn btn-primary" 
-              onClick={nextStep}
+        {/* Condición física y estado */}
+        <div className="form-section">
+          <h4>{__('Condición física y estado', 'nutrition-calculator')}</h4>
+          
+          <div className={`form-group ${touched.bodyCondition && errors.bodyCondition ? 'has-error' : ''}`}>
+            <label>{__('Condición física *', 'nutrition-calculator')}</label>
+            <div className="radio-group">
+              {BODY_CONDITIONS.map((condition) => (
+                <label key={condition.value} className="radio-option">
+                  <input
+                    type="radio"
+                    name="bodyCondition"
+                    value={condition.value}
+                    checked={formData.bodyCondition === condition.value}
+                    onChange={(e) => {
+                      handleChange('bodyCondition', e.target.value);
+                      setTouched({...touched, bodyCondition: true});
+                    }}
+                  />
+                  <span>{condition.label}</span>
+                </label>
+              ))}
+            </div>
+            {touched.bodyCondition && errors.bodyCondition && <span className="error-message">{errors.bodyCondition}</span>}
+          </div>
+
+          <div className={`form-group ${touched.reproductiveState && errors.reproductiveState ? 'has-error' : ''}`}>
+            <label>{__('Estado reproductivo *', 'nutrition-calculator')}</label>
+            <div className="radio-group">
+              {REPRODUCTIVE_STATES.map((state) => (
+                <label key={state.value} className="radio-option">
+                  <input
+                    type="radio"
+                    name="reproductiveState"
+                    value={state.value}
+                    checked={formData.reproductiveState === state.value}
+                    onChange={(e) => {
+                      handleChange('reproductiveState', e.target.value);
+                      setTouched({...touched, reproductiveState: true});
+                    }}
+                  />
+                  <span>{state.label}</span>
+                </label>
+              ))}
+            </div>
+            {touched.reproductiveState && errors.reproductiveState && <span className="error-message">{errors.reproductiveState}</span>}
+          </div>
+
+          <div className={`form-group ${touched.activityLevel && errors.activityLevel ? 'has-error' : ''}`}>
+            <label htmlFor="activityLevel">{__('Nivel de actividad física *', 'nutrition-calculator')}</label>
+            <select
+              id="activityLevel"
+              value={formData.activityLevel}
+              onChange={(e) => handleChange('activityLevel', e.target.value)}
+              onBlur={() => handleBlur('activityLevel')}
             >
-              { __('Siguiente', 'mi-block') }
-            </button>
+              <option value="">{__('Selecciona el nivel...', 'nutrition-calculator')}</option>
+              {ACTIVITY_LEVELS.map(level => (
+                <option key={level.value} value={level.value}>
+                  {level.label}
+                </option>
+              ))}
+            </select>
+            {touched.activityLevel && errors.activityLevel && <span className="error-message">{errors.activityLevel}</span>}
           </div>
         </div>
 
-        {/* Paso 2: Condición física y estado */}
-        <div className={`form-step ${step === 2 ? 'active' : ''}`}>
-          <div className="form-header">
-            <h3>{ __('Condición física y estado', 'mi-block') }</h3>
-            <p>{ __('Cuéntanos más sobre el estado de tu mascota', 'mi-block') }</p>
-          </div>
-          <span className="step-indicator">{step} de {totalSteps}</span>
-
-          <div className={`form-group ${touched.body_image && errors.body_image ? 'has-error' : ''}`}>
-            <label>{ __('Condición corporal', 'mi-block') }</label>
-            <div className="body-image-selector">
-              {BODY_IMAGES.map((option) => (
-                <div 
-                  key={option.value} 
-                  className={`body-image-option ${formData.body_image === option.value ? 'selected' : ''}`} 
-                  onClick={() => {
-                    handleChange('body_image', option.value);
-                    setTouched({...touched, body_image: true});
-                  }}
-                >
-                  <div className="body-image-icon">{/* Aquí iría un icono o imagen SVG */}</div>
-                  <span>{option.label}</span>
-                </div>
-              ))}
-            </div>
-            {touched.body_image && errors.body_image && <span className="error-message">{errors.body_image}</span>}
-          </div>
-
-          <div className={`form-group ${touched.reproductive_state && errors.reproductive_state ? 'has-error' : ''}`}>
-            <label>{ __('Estado reproductivo', 'mi-block') }</label>
-            <div className="reproductive-state-selector">
-              {REPRODUCTIVE_STATES.map((option) => (
-                <div 
-                  key={option.value} 
-                  className={`reproductive-state-option ${formData.reproductive_state === option.value ? 'selected' : ''}`}
-                  onClick={() => {
-                    handleChange('reproductive_state', option.value);
-                    setTouched({...touched, reproductive_state: true});
-                  }}
-                >
-                  <span>{option.label}</span>
-                </div>
-              ))}
-            </div>
-            {touched.reproductive_state && errors.reproductive_state && <span className="error-message">{errors.reproductive_state}</span>}
-          </div>
-
-          <div className={`form-group ${touched.activity_level && errors.activity_level ? 'has-error' : ''}`}>
-            <FormControl 
-              fullWidth 
-              variant="outlined"
-              error={touched.activity_level && Boolean(errors.activity_level)}
-            >
-              <InputLabel id="activity_level-label">{ __('Nivel de actividad', 'mi-block') }</InputLabel>
-              <Select
-                labelId="activity_level-label"
-                id="activity_level"
-                value={formData.activity_level}
-                label={__('Nivel de actividad', 'mi-block')}
-                onChange={(e) => handleChange('activity_level', e.target.value)}
-                onBlur={() => handleBlur('activity_level')}
-                required
-              >
-                <MenuItem value="" disabled>{ __('Selecciona...', 'mi-block') }</MenuItem>
-                {ACTIVITY_LEVELS.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              {touched.activity_level && errors.activity_level && <span className="error-message">{errors.activity_level}</span>}
-            </FormControl>
-          </div>
-
-          <div className="button-row">
-            <button type="button" className="btn btn-secondary" onClick={prevStep}>
-              { __('Anterior', 'mi-block') }
-            </button>
-            <button type="button" className="btn btn-primary" onClick={nextStep}>
-              { __('Siguiente', 'mi-block') }
-            </button>
-          </div>
-        </div>
-
-        {/* Paso 3: Necesidades especiales y contacto */}
-        <div className={`form-step ${step === 3 ? 'active' : ''}`}>
-          <div className="form-header">
-            <h3>{ __('Necesidades especiales y contacto', 'mi-block') }</h3>
-            <p>{ __('Información adicional para la dieta ideal', 'mi-block') }</p>
-          </div>
-          <span className="step-indicator">{step} de {totalSteps}</span>
-
-          <div className="form-group">
-            <FormControl 
-              fullWidth 
-              variant="outlined"
-              error={touched.allergies && Boolean(errors.allergies)}
-            >
-              <InputLabel id="allergies-label">{ __('Alergias', 'mi-block') }</InputLabel>
-              <Select
-                labelId="allergies-label"
-                id="allergies"
-                value={formData.allergies}
-                label={__('Alergias', 'mi-block')}
-                onChange={(e) => handleChange('allergies', e.target.value)}
-                required
-                onBlur={() => handleBlur('allergies')}
-              >
-                {ALLERGIES_DATA.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              {touched.allergies && errors.allergies && <span className="error-message">{errors.allergies}</span>}
-            </FormControl>
-          </div>
-
-          <div className="form-group">
-            <FormControl 
-              fullWidth 
-              variant="outlined"
-              error={touched.special_needs && Boolean(errors.special_needs)}
-            >
-              <InputLabel id="special_needs-label">{ __('Necesidades especiales', 'mi-block') }</InputLabel>
-              <Select
-                labelId="special_needs-label"
-                id="special_needs"
-                value={formData.special_needs}
-                label={__('Necesidades especiales', 'mi-block')}
-                onChange={(e) => handleChange('special_needs', e.target.value)}
-                required
-                onBlur={() => handleBlur('special_needs')}
-              >
-                {SPECIAL_NEEDS_DATA.map(option => (
-                  <MenuItem key={option.value} value={option.value}>
-                    {option.label}
-                  </MenuItem>
-                ))}
-              </Select>
-              {touched.special_needs && errors.special_needs && <span className="error-message">{errors.special_needs}</span>}
-            </FormControl>
-          </div>
-
+        {/* Información de contacto */}
+        <div className="form-section">
+          <h4>{__('Información de contacto', 'nutrition-calculator')}</h4>
+          
           <div className={`form-group ${touched.ownerName && errors.ownerName ? 'has-error' : ''}`}>
-            <label htmlFor="ownerName">{ __('Tu nombre', 'mi-block') }</label>
+            <label htmlFor="ownerName">{__('Tu nombre *', 'nutrition-calculator')}</label>
             <input
               type="text"
               id="ownerName"
               value={formData.ownerName}
               onChange={(e) => handleChange('ownerName', e.target.value)}
               onBlur={() => handleBlur('ownerName')}
-              required
+              placeholder={__('Tu nombre completo', 'nutrition-calculator')}
             />
             {touched.ownerName && errors.ownerName && <span className="error-message">{errors.ownerName}</span>}
           </div>
 
           <div className={`form-group ${touched.email && errors.email ? 'has-error' : ''}`}>
-            <label htmlFor="email">{ __('Email de contacto', 'mi-block') }</label>
+            <label htmlFor="email">{__('Email de contacto *', 'nutrition-calculator')}</label>
             <input
               type="email"
               id="email"
               value={formData.email}
               onChange={(e) => handleChange('email', e.target.value)}
               onBlur={() => handleBlur('email')}
-              required
+              placeholder={__('tu.email@ejemplo.com', 'nutrition-calculator')}
             />
             {touched.email && errors.email && <span className="error-message">{errors.email}</span>}
           </div>
+        </div>
 
-          {responseMessage && (
-            <div className={`form-message ${isSuccess ? 'success' : 'error'}`}>
-              <p>{responseMessage}</p>
-            </div>
-          )}
-
-          <div className="button-row">
-            <button type="button" className="btn btn-secondary" onClick={prevStep}>
-              { __('Anterior', 'mi-block') }
-            </button>
-            <button 
-              type="submit" 
-              className="btn btn-primary"
-              disabled={isSubmitting}
-            >
-              {isSubmitting 
-                ? __('Enviando...', 'mi-block') 
-                : __('Obtener dieta BARF', 'mi-block')}
-            </button>
-          </div>
+        <div className="form-actions">
+          <button 
+            type="submit" 
+            className="btn btn-primary"
+            disabled={isCalculating}
+          >
+            {isCalculating 
+              ? __('Calculando...', 'nutrition-calculator') 
+              : __('Calcular valor nutricional', 'nutrition-calculator')}
+          </button>
         </div>
       </form>
     </div>
   );
 };
 
-registerBlockType('mi-block/formulario-pet', {
-  title: __('Formulario de Mascota BARF', 'mi-block'),
-  icon: 'pets',
+registerBlockType('nutrition-calculator/calculator-form', {
+  title: __('Calculadora Nutricional', 'nutrition-calculator'),
+  icon: 'chart-line',
   category: 'widgets',
-
-  edit: PetFormBlock,
+  description: __('Calcula el valor diario nutricional para perros basado en edad, condición corporal, nivel de actividad y peso.', 'nutrition-calculator'),
+  
+  edit: NutritionCalculatorBlock,
 
   save: () => {
-    // Renderizado dinámico del lado del servidor, no necesitamos guardar HTML estático
+    // Renderizado dinámico del lado del servidor
     return null;
   },
 }); 
