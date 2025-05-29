@@ -1,0 +1,406 @@
+/* style.css */
+
+/* Reset básico */
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+  font-family: sans-serif;
+}
+
+/* Contenedor principal del bloque */
+.pet-form-container {
+  max-width: 600px;
+  margin: 40px auto;
+  background-color: #fff;
+  border-radius: 8px;
+  padding: 20px;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+}
+
+/* Cabecera del formulario */
+.form-header h3 {
+  font-size: 1.3rem;
+  margin-bottom: 8px;
+  color: #333;
+}
+.form-header p {
+  font-size: 0.9rem;
+  margin-bottom: 20px;
+  color: #666;
+}
+
+/* Indicador de paso */
+.step-indicator {
+  font-size: 0.85rem;
+  color: #999;
+  margin-bottom: 15px;
+  text-align: right;
+  display: block;
+}
+
+/* Cada paso */
+.form-step {
+  display: none;
+}
+.form-step.active {
+  display: block;
+}
+
+/* Layout en fila para algunos campos */
+.form-row {
+  display: flex;
+  gap: 15px;
+  align-items: flex-start;
+}
+
+.form-row .form-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+}
+
+/* Asegura que los inputs nativos y los componentes de M-UI ocupen el ancho completo de su .form-group */
+.form-row .form-group input[type="number"],
+.form-row .form-group .MuiFormControl-root,
+.form-row .form-group .MuiAutocomplete-root .MuiInputBase-root,
+.form-row .form-group .MuiInputBase-root /* Asegura que el input base de M-UI Select y Autocomplete se alinee */
+{
+    width: 100%;
+    box-sizing: border-box; 
+    /* Intentar alinear las bases de los campos */
+    vertical-align: top; /* Asegura que se alineen por arriba si es necesario */
+}
+
+/* Ajuste específico para el input nativo de número (Edad) */
+.form-row .form-group input[type="number"] {
+  height: 40px; /* Fija una altura */
+  padding: 10px 14px; /* Padding que se acerca al de M-UI Outlined */
+  line-height: 1.4375em; /* Coincidir con el line-height de M-UI */
+}
+
+/* Ajustes para el input base de Material-UI (para Select y Autocomplete) */
+.form-row .form-group .MuiInputBase-root {
+  height: 40px; /* Asegura la altura total */
+  align-items: center; /* Centra verticalmente el contenido interno si es flex */
+  padding-top: 0; /* Eliminar padding superior si interfiere con la altura fija */
+  padding-bottom: 0; /* Eliminar padding inferior */
+}
+
+/* Ajustes para el contenido interno del Select de M-UI */
+.form-row .form-group .MuiSelect-select {
+    padding-top: 10px; /* Restaurar padding vertical interno si es necesario para el texto */
+    padding-bottom: 10px;
+    line-height: 1.4375em; /* Coincidir line-height */
+    box-sizing: border-box; /* Fundamental */
+}
+
+/* Grupos de campos */
+.form-group {
+  margin-bottom: 15px;
+  width: 100%;
+}
+
+.form-group label {
+  display: block;
+  margin-bottom: 5px;
+  color: #333;
+  font-weight: 500;
+}
+
+/* Estilos comunes para inputs y selects */
+.form-group input[type="text"],
+.form-group input[type="number"],
+.form-group input[type="email"],
+.form-group select {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.95rem;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  background-color: #fff;
+  box-sizing: border-box; /* Garantiza que padding y border estén incluidos en el ancho total */
+}
+
+/* Estilos específicos para selects */
+.form-group select {
+  height: 42px; /* Altura consistente */
+  appearance: auto; /* Mantener apariencia nativa del selector */
+  max-width: 100%; /* Asegura que no se desborde del contenedor */
+  width: 100%; /* Asegura que ocupe todo el ancho disponible */
+}
+
+/* Específicamente para los selects de alergias y necesidades especiales en el paso 3 */
+.form-step:nth-child(3) .form-group select,
+#allergies,
+#special_needs {
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  display: block; /* Asegura que se comporte como un bloque */
+}
+
+/* Asegura que los grupos de formulario en el paso 3 tengan el ancho completo */
+.form-step:nth-child(3) .form-group {
+  width: 100%;
+  display: block;
+}
+
+.form-group input:focus,
+.form-group select:focus {
+  border-color: #999;
+}
+
+/* Estilo para select deshabilitado */
+.form-group select:disabled {
+  background-color: #f8f8f8;
+  cursor: not-allowed;
+}
+
+/* Fila de botones */
+.button-row {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 20px;
+}
+
+/* Botones */
+.btn {
+  border: none;
+  cursor: pointer;
+  padding: 10px 16px;
+  font-size: 0.9rem;
+  border-radius: 4px;
+  transition: background-color 0.3s;
+}
+
+.btn-primary {
+  background-color: #ff9c5b;
+  color: #fff;
+}
+.btn-primary:hover {
+  background-color: #e58b4f;
+}
+
+.btn-secondary {
+  background-color: #ccc;
+  color: #333;
+}
+.btn-secondary:hover {
+  background-color: #b3b3b3;
+}
+
+.btn:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+/* Selector de body image */
+.body-image-selector {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.body-image-option {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 10px;
+  text-align: center;
+  cursor: pointer;
+  flex: 1;
+  min-width: 105px;
+  transition: all 0.3s ease;
+}
+
+.body-image-option:hover {
+  background-color: #f8f8f8;
+}
+
+.body-image-option.selected {
+  border-color: #ff9c5b;
+  background-color: #fff4ed;
+}
+
+.body-image-icon {
+  height: 40px;
+  margin-bottom: 8px;
+  background-color: #f0f0f0;
+  border-radius: 4px;
+}
+
+/* Selector de estado reproductivo */
+.reproductive-state-selector {
+  display: flex;
+  gap: 10px;
+  margin-bottom: 15px;
+}
+
+.reproductive-state-option {
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  padding: 12px;
+  text-align: center;
+  cursor: pointer;
+  flex: 1;
+  transition: all 0.3s ease;
+}
+
+.reproductive-state-option:hover {
+  background-color: #f8f8f8;
+}
+
+.reproductive-state-option.selected {
+  border-color: #ff9c5b;
+  background-color: #fff4ed;
+}
+
+/* Estilos para campos con error */
+.form-group.has-error input,
+.form-group.has-error select {
+  border-color: #dc3545;
+  background-color: #fff8f8;
+}
+
+.form-group.has-error .body-image-selector,
+.form-group.has-error .reproductive-state-selector {
+  border: 1px solid #dc3545;
+  border-radius: 4px;
+  padding: 5px;
+  background-color: #fff8f8;
+}
+
+.error-message {
+  display: block;
+  color: #dc3545;
+  font-size: 0.85rem;
+  margin-top: 5px;
+}
+
+/* Mensajes de formulario */
+.form-message {
+  padding: 10px;
+  margin: 15px 0;
+  border-radius: 4px;
+  font-size: 0.9rem;
+}
+
+.form-message.success {
+  background-color: #e6f7e6;
+  border: 1px solid #c3e6cb;
+  color: #155724;
+}
+
+.form-message.error {
+  background-color: #f8d7da;
+  border: 1px solid #f5c6cb;
+  color: #721c24;
+}
+
+.form-success-message {
+  text-align: center;
+  padding: 30px;
+}
+
+.form-success-message h3 {
+  color: #155724;
+  margin-bottom: 10px;
+}
+
+.form-success-message p {
+  color: #333;
+}
+
+/* Responsive */
+@media (max-width: 600px) {
+  .form-row {
+    flex-direction: column;
+    gap: 0;
+  }
+  
+  .body-image-selector {
+    flex-direction: column;
+  }
+
+  .reproductive-state-selector {
+    flex-direction: column;
+  }
+}
+
+/* Estilos para el campo de búsqueda de razas */
+.breed-search-container {
+  margin-bottom: 8px;
+  position: relative;
+}
+
+.breed-search-input {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+  box-sizing: border-box;
+  font-size: 14px;
+  line-height: 1.5;
+  transition: border-color 0.2s ease;
+}
+
+.breed-search-input:focus {
+  border-color: #0073aa;
+  outline: none;
+  box-shadow: 0 0 0 1px #0073aa;
+}
+
+.breed-search-input::placeholder {
+  color: #aaa;
+  font-style: italic;
+}
+
+.breed-select {
+  width: 100%;
+  max-height: 200px;
+  overflow-y: auto !important;
+}
+
+@media (max-width: 768px) {
+  .breed-search-input,
+  .breed-select {
+    font-size: 16px; /* Mejor para dispositivos móviles */
+  }
+}
+
+/* Estilos para selects de Material-UI dentro de form-row */
+.form-row .MuiFormControl-root {
+  flex: 1; /* Asegura que ocupen el espacio disponible igual que otros form-group */
+  min-width: 0; /* Previene que el contenido fuerce un ancho mínimo que desborde */
+}
+
+/* Ajuste para el campo de Tipo para que se vea mejor en la fila */
+.form-row .form-group:last-child .MuiFormControl-root {
+  min-width: 100px; /* Asegura un ancho mínimo razonable para el select de tipo */
+}
+
+/* Asegura que el input dentro del Autocomplete ocupe todo el ancho disponible */
+.form-group .MuiAutocomplete-root .MuiInputBase-root {
+  width: 100%;
+}
+
+/* Estilos específicos para el label del Autocomplete para que se posicione correctamente */
+.form-group .MuiAutocomplete-root .MuiInputLabel-root {
+  /* Ajustar si es necesario según el padding, pero M-UI suele manejarlo bien con variant='outlined' */
+  /* top: -3px;  ejemplo de ajuste si el label está muy alto */
+}
+
+/* Ajustar margen inferior para el helper text/error message si es necesario */
+.form-group .MuiFormHelperText-root {
+  margin-top: 3px;
+}
+
+/* Ajuste para el label del campo de Edad para centrarlo verticalmente cuando el campo está vacío */
+/* Se dirige al label dentro del TextField de Material-UI en el estado no 'shrink' */
+.form-group #age-label.MuiInputLabel-outlined:not(.MuiInputLabel-shrink) {
+    /* Ajusta este valor si es necesario para centrar visualmente */
+    transform: translate(14px, 10px) scale(1); /* Ejemplo: ajustar el segundo valor (10px) */
+    /* Puedes necesitar ajustar el primer valor (14px) si el padding del input es diferente */
+} 
