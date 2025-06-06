@@ -204,6 +204,7 @@ function register_dog_post_type() {
 
     register_post_type('nutrition_calc', $args);
 }
+add_action('init', 'register_dog_post_type');
 
 /**
  * Registrar la taxonomía de razas de perros
