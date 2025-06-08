@@ -1,7 +1,7 @@
 <?php
 /**
- * Plugin Name: Calculadora Nutricional para Perros
- * Description: Un bloque de Gutenberg que calcula el valor diario nutricional para perros basado en edad, condición corporal, nivel de actividad y peso.
+ * Plugin Name: Formulario de Mascota y Calculadora Nutricional
+ * Description: Un bloque de Gutenberg para registrar mascotas con formulario multi-paso y calcular valor diario nutricional para perros.
  * Version: 2.0
  * Author: Forever Dog
  */
@@ -12,35 +12,38 @@ if (!defined('ABSPATH')) {
 }
 
 // Definir constantes del plugin
-define('NUTRITION_CALCULATOR_VERSION', '2.0');
-define('NUTRITION_CALCULATOR_PATH', plugin_dir_path(__FILE__));
-define('NUTRITION_CALCULATOR_URL', plugin_dir_url(__FILE__));
+define('PET_FORM_VERSION', '2.0');
+define('PET_FORM_PATH', plugin_dir_path(__FILE__));
+define('PET_FORM_URL', plugin_dir_url(__FILE__));
 
 /**
  * Activación del plugin
  */
-function nutrition_calculator_activate() {
+function pet_form_activate() {
     // Crear tabla de factores nutricionales
     create_nutrition_factors_table();
     
     // Insertar factores por defecto
     insert_default_nutrition_factors();
     
+    // Crear tabla de mascotas
+    create_pets_table();
+    
     // Registrar el tipo de contenido personalizado
-    register_dog_post_type();
+    register_pet_post_type();
     
     // Limpiar caché de reescritura
     flush_rewrite_rules();
 }
-register_activation_hook(__FILE__, 'nutrition_calculator_activate');
+register_activation_hook(__FILE__, 'pet_form_activate');
 
 /**
  * Desactivación del plugin
  */
-function nutrition_calculator_deactivate() {
+function pet_form_deactivate() {
     flush_rewrite_rules();
 }
-register_deactivation_hook(__FILE__, 'nutrition_calculator_deactivate');
+register_deactivation_hook(__FILE__, 'pet_form_deactivate');
 
 /**
  * Crear tabla para factores nutricionales
@@ -63,6 +66,44 @@ function create_nutrition_factors_table() {
         updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
         PRIMARY KEY (id),
         UNIQUE KEY factor_combination (life_stage, body_condition, reproductive_state, activity_level)
+    ) $charset_collate;";
+    
+    require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
+    dbDelta($sql);
+}
+
+/**
+ * Crear tabla para mascotas registradas
+ */
+function create_pets_table() {
+    global $wpdb;
+    
+    $table_name = $wpdb->prefix . 'pets';
+    
+    $charset_collate = $wpdb->get_charset_collate();
+    
+    $sql = "CREATE TABLE $table_name (
+        id mediumint(9) NOT NULL AUTO_INCREMENT,
+        pet_name varchar(100) NOT NULL,
+        breed varchar(100) NOT NULL,
+        sex varchar(10) NOT NULL,
+        age int(3) NOT NULL,
+        age_type varchar(10) NOT NULL,
+        natural_food varchar(10) NOT NULL,
+        activity_level varchar(20) NOT NULL,
+        reproductive_state varchar(20) NOT NULL,
+        body_condition varchar(20) NOT NULL,
+        weight decimal(5,2) NOT NULL,
+        allergies text,
+        special_needs text,
+        owner_name varchar(100) NOT NULL,
+        email varchar(100) NOT NULL,
+        life_stage varchar(20),
+        nutrition_factor decimal(3,2),
+        daily_nutrition decimal(6,2),
+        created_at datetime DEFAULT CURRENT_TIMESTAMP,
+        updated_at datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+        PRIMARY KEY (id)
     ) $charset_collate;";
     
     require_once(ABSPATH . 'wp-admin/includes/upgrade.php');
@@ -179,14 +220,23 @@ function insert_default_nutrition_factors() {
 }
 
 /**
- * Registrar custom post type para perros (mantenido para compatibilidad)
+ * Registrar custom post type para mascotas (para compatibilidad)
  */
-function register_dog_post_type() {
+function register_pet_post_type() {
     $labels = array(
-        'name'               => _x('Cálculos Nutricionales', 'post type general name'),
-        'singular_name'      => _x('Cálculo Nutricional', 'post type singular name'),
-        'menu_name'          => _x('Cálculos', 'admin menu'),
-        'name_admin_bar'     => _x('Cálculo', 'add new on admin bar'),
+        'name'               => _x('Mascotas', 'post type general name'),
+        'singular_name'      => _x('Mascota', 'post type singular name'),
+        'menu_name'          => _x('Mascotas', 'admin menu'),
+        'name_admin_bar'     => _x('Mascota', 'add new on admin bar'),
+        'add_new'            => _x('Añadir nueva', 'Mascota'),
+        'add_new_item'       => __('Añadir nueva mascota'),
+        'new_item'           => __('Nueva mascota'),
+        'edit_item'          => __('Editar mascota'),
+        'view_item'          => __('Ver mascota'),
+        'all_items'          => __('Todas las mascotas'),
+        'search_items'       => __('Buscar mascotas'),
+        'not_found'          => __('No se encontraron mascotas.'),
+        'not_found_in_trash' => __('No se encontraron mascotas en la papelera.')
     );
 
     $args = array(
@@ -194,7 +244,7 @@ function register_dog_post_type() {
         'public'             => false,
         'publicly_queryable' => false,
         'show_ui'            => true,
-        'show_in_menu'       => 'nutrition-calculator',
+        'show_in_menu'       => 'pet-form',
         'capability_type'    => 'post',
         'has_archive'        => false,
         'hierarchical'       => false,
@@ -202,7 +252,7 @@ function register_dog_post_type() {
         'show_in_rest'       => true,
     );
 
-    register_post_type('nutrition_calc', $args);
+    register_post_type('pet', $args);
 }
 
 /**
@@ -213,71 +263,49 @@ function register_dog_breed_taxonomy() {
         'name'              => _x('Razas de Perros', 'taxonomy general name'),
         'singular_name'     => _x('Raza de Perro', 'taxonomy singular name'),
         'menu_name'         => __('Razas de Perros'),
+        'add_new_item'      => __('Agregar Nueva Raza'),
+        'edit_item'         => __('Editar Raza'),
+        'update_item'       => __('Actualizar Raza'),
+        'new_item_name'     => __('Nombre de Nueva Raza'),
+        'not_found'         => __('No se encontraron razas')
     );
 
     $args = array(
-        'hierarchical'      => true,
+        'hierarchical'      => false,  // Quita la categoría superior
         'labels'            => $labels,
         'show_ui'           => true,
         'show_admin_column' => true,
         'query_var'         => true,
         'rewrite'           => array('slug' => 'breed'),
         'show_in_rest'      => true,
-        'show_in_menu'      => 'nutrition-calculator',
+        'show_in_menu'      => 'pet-form',
+        'meta_box_cb'       => false,  // Quita metaboxes adicionales
+        'show_tagcloud'     => false   // Quita campos adicionales
     );
 
-    register_taxonomy('dog_breed', array('nutrition_calc'), $args);
-    create_default_dog_breeds();
+    register_taxonomy('dog_breed', array('pet'), $args);
+  //  create_default_dog_breeds();
 }
 add_action('init', 'register_dog_breed_taxonomy');
 
 /**
  * Crear razas de perros por defecto
  */
-function create_default_dog_breeds() {
-    // Verificar si ya existen términos
-    $existing_terms = get_terms(array(
-        'taxonomy' => 'dog_breed',
-        'hide_empty' => false,
-        'number' => 1
-    ));
-    
-    if (!empty($existing_terms)) {
-        return; // Ya existen razas
-    }
-    
-    $default_breeds = array(
-        'Labrador Retriever',
-        'Golden Retriever',
-        'Pastor Alemán',
-        'Bulldog',
-        'Chihuahua',
-        'Pug',
-        'Beagle',
-        'Boxer',
-        'Poodle',
-        'Rottweiler',
-        'Dachshund',
-        'Husky Siberiano',
-        'Pitbull',
-        'Mestizo / Criollo',
-        'Otro'
-    );
-    
-    foreach ($default_breeds as $breed_name) {
-        if (!term_exists($breed_name, 'dog_breed')) {
-            wp_insert_term($breed_name, 'dog_breed');
-        }
-    }
-}
+//function create_default_dog_breeds() {
+    // No crear razas por defecto
+    // Los administradores pueden usar la página "Gestión de Razas" 
+    // para agregar las razas que necesiten, ya sea individualmente 
+    // o importando desde archivos .txt
+    return;
+//}
 
 /**
  * Registrar el bloque de Gutenberg
  */
-function nutrition_calculator_register_block() {
+function pet_form_register_block() {
     // Registrar el script del editor
     wp_register_script(
-        'nutrition-calculator-editor',
+        'pet-form-editor',
         plugins_url('build/index.js', __FILE__),
         array('wp-blocks', 'wp-element', 'wp-editor'),
         filemtime(plugin_dir_path(__FILE__) . 'build/index.js')
@@ -285,7 +313,7 @@ function nutrition_calculator_register_block() {
 
     // Registrar los estilos
     wp_register_style(
-        'nutrition-calculator-style',
+        'pet-form-style',
         plugins_url('src/style.css', __FILE__),
         array(),
         filemtime(plugin_dir_path(__FILE__) . 'src/style.css')
@@ -293,7 +321,7 @@ function nutrition_calculator_register_block() {
 
     // Agregar datos de razas como variable global
     wp_localize_script(
-        'nutrition-calculator-editor',
+        'pet-form-editor',
         'petFormSettings',
         array(
             'dogBreeds' => get_dog_breeds_list(),
@@ -303,22 +331,22 @@ function nutrition_calculator_register_block() {
     );
 
     // Registrar el bloque
-    register_block_type('nutrition-calculator/calculator-form', array(
-        'editor_script' => 'nutrition-calculator-editor',
-        'style' => 'nutrition-calculator-style',
-        'render_callback' => 'nutrition_calculator_render_block'
+    register_block_type('pet-form/form-block', array(
+        'editor_script' => 'pet-form-editor',
+        'style' => 'pet-form-style',
+        'render_callback' => 'pet_form_render_block'
     ));
 }
-add_action('init', 'nutrition_calculator_register_block');
+add_action('init', 'pet_form_register_block');
 
 /**
  * Función de renderizado del bloque
  */
-function nutrition_calculator_render_block($attributes) {
-    wp_enqueue_script('nutrition-calculator-editor');
-    wp_enqueue_style('nutrition-calculator-style');
+function pet_form_render_block($attributes) {
+    wp_enqueue_script('pet-form-editor');
+    wp_enqueue_style('pet-form-style');
     
-    return '<div id="nutrition-calculator-block"></div>';
+    return '<div id="pet-form-block"></div>';
 }
 
 /**
@@ -344,21 +372,39 @@ function get_dog_breeds_list() {
 }
 
 /**
- * Agregar página de administración
+ * Agregar página de administración principal
  */
-function nutrition_calculator_admin_menu() {
+function pet_form_admin_menu() {
     add_menu_page(
-        'Calculadora Nutricional',
-        'Calculadora Nutricional',
+        'Formulario de Mascotas',
+        'Mascotas',
         'manage_options',
-        'nutrition-calculator',
-        'nutrition_calculator_admin_page',
-        'dashicons-chart-line',
+        'pet-form',
+        'pet_form_admin_page',
+        'dashicons-pets',
         25
     );
     
     add_submenu_page(
-        'nutrition-calculator',
+        'pet-form',
+        'Lista de Mascotas',
+        'Lista de Mascotas',
+        'manage_options',
+        'pet-form-list',
+        'pet_form_list_page'
+    );
+    
+    add_submenu_page(
+        'pet-form',
+        'Agregar Mascota',
+        'Agregar Mascota',
+        'manage_options',
+        'pet-form-add',
+        'pet_form_add_page'
+    );
+    
+    add_submenu_page(
+        'pet-form',
         'Factores Nutricionales',
         'Factores Nutricionales',
         'manage_options',
@@ -367,54 +413,77 @@ function nutrition_calculator_admin_menu() {
     );
     
     add_submenu_page(
-        'nutrition-calculator',
+        'pet-form',
+        'Gestión de Razas',
+        'Gestión de Razas',
+        'manage_options',
+        'pet-form-breeds',
+        'pet_form_breeds_management_page'
+    );
+    
+    add_submenu_page(
+        'pet-form',
         'Configuración',
         'Configuración',
         'manage_options',
-        'nutrition-settings',
-        'nutrition_settings_admin_page'
+        'pet-form-settings',
+        'pet_form_settings_page'
     );
 }
-add_action('admin_menu', 'nutrition_calculator_admin_menu');
+add_action('admin_menu', 'pet_form_admin_menu');
 
 /**
  * Página principal de administración
  */
-function nutrition_calculator_admin_page() {
+function pet_form_admin_page() {
     global $wpdb;
-    $table_name = $wpdb->prefix . 'nutrition_factors';
-    $total_factors = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+    $pets_table = $wpdb->prefix . 'pets';
+    $factors_table = $wpdb->prefix . 'nutrition_factors';
+    
+    $total_pets = $wpdb->get_var("SELECT COUNT(*) FROM $pets_table");
+    $total_factors = $wpdb->get_var("SELECT COUNT(*) FROM $factors_table");
     
     ?>
     <div class="wrap">
-        <h1>Calculadora Nutricional</h1>
+        <h1>Panel de Control - Mascotas</h1>
         
-        <div class="nutrition-admin-dashboard">
+        <div class="pet-form-dashboard">
             <div class="dashboard-stats">
+                <div class="stat-card">
+                    <h3>Mascotas Registradas</h3>
+                    <div class="stat-number"><?php echo $total_pets; ?></div>
+        </div>
+
                 <div class="stat-card">
                     <h3>Factores Configurados</h3>
                     <div class="stat-number"><?php echo $total_factors; ?></div>
-                </div>
-                
+        </div>
+
                 <div class="stat-card">
                     <h3>Razas Disponibles</h3>
                     <div class="stat-number"><?php echo wp_count_terms('dog_breed'); ?></div>
-                </div>
-            </div>
-            
+        </div>
+    </div>
+
             <div class="quick-actions">
                 <h2>Acciones Rápidas</h2>
-                <a href="<?php echo admin_url('admin.php?page=nutrition-factors'); ?>" class="button button-primary">
+                <a href="<?php echo admin_url('admin.php?page=pet-form-add'); ?>" class="button button-primary">
+                    Agregar Nueva Mascota
+                </a>
+                <a href="<?php echo admin_url('admin.php?page=pet-form-list'); ?>" class="button">
+                    Ver Mascotas Registradas
+                </a>
+                <a href="<?php echo admin_url('admin.php?page=nutrition-factors'); ?>" class="button">
                     Gestionar Factores Nutricionales
                 </a>
-                <a href="<?php echo admin_url('edit-tags.php?taxonomy=dog_breed&post_type=nutrition_calc'); ?>" class="button">
+                <a href="<?php echo admin_url('edit-tags.php?taxonomy=dog_breed&post_type=pet'); ?>" class="button">
                     Gestionar Razas
                 </a>
             </div>
         </div>
         
         <style>
-        .nutrition-admin-dashboard { margin-top: 20px; }
+        .pet-form-dashboard { margin-top: 20px; }
         .dashboard-stats { display: flex; gap: 20px; margin-bottom: 30px; }
         .stat-card { background: #fff; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); flex: 1; }
         .stat-card h3 { margin: 0 0 10px 0; color: #666; }
@@ -424,6 +493,391 @@ function nutrition_calculator_admin_page() {
         </style>
     </div>
     <?php
+}
+
+/**
+ * Página de lista de mascotas
+ */
+function pet_form_list_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'pets';
+    
+    // Manejar eliminación
+    if (isset($_GET['action']) && $_GET['action'] === 'delete' && isset($_GET['pet_id'])) {
+        $pet_id = intval($_GET['pet_id']);
+        if (check_admin_referer('delete_pet_' . $pet_id)) {
+            $wpdb->delete($table_name, array('id' => $pet_id), array('%d'));
+            echo '<div class="notice notice-success"><p>Mascota eliminada correctamente.</p></div>';
+        }
+    }
+    
+    // Obtener mascotas con paginación
+    $per_page = 20;
+    $current_page = isset($_GET['paged']) ? max(1, intval($_GET['paged'])) : 1;
+    $offset = ($current_page - 1) * $per_page;
+    
+    $total_pets = $wpdb->get_var("SELECT COUNT(*) FROM $table_name");
+    $pets = $wpdb->get_results($wpdb->prepare(
+        "SELECT * FROM $table_name ORDER BY created_at DESC LIMIT %d OFFSET %d",
+        $per_page,
+        $offset
+    ));
+    
+    $total_pages = ceil($total_pets / $per_page);
+    
+    ?>
+    <div class="wrap">
+        <h1>Lista de Mascotas Registradas</h1>
+        
+        <?php if (empty($pets)): ?>
+            <p>No hay mascotas registradas aún.</p>
+        <?php else: ?>
+            <table class="wp-list-table widefat fixed striped">
+                <thead>
+                    <tr>
+                        <th>Nombre</th>
+                        <th>Raza</th>
+                        <th>Sexo</th>
+                        <th>Edad</th>
+                        <th>Peso</th>
+                        <th>Ración Diaria</th>
+                        <th>Propietario</th>
+                        <th>Fecha</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <?php foreach ($pets as $pet): ?>
+                    <tr>
+                        <td><strong><?php echo esc_html($pet->pet_name); ?></strong></td>
+                        <td><?php echo esc_html($pet->breed); ?></td>
+                        <td><?php echo esc_html($pet->sex); ?></td>
+                        <td><?php echo esc_html($pet->age . ' ' . $pet->age_type); ?></td>
+                        <td><?php echo esc_html($pet->weight); ?> kg</td>
+                        <td><?php echo esc_html($pet->daily_nutrition); ?> g</td>
+                        <td>
+                            <?php echo esc_html($pet->owner_name); ?><br>
+                            <small><?php echo esc_html($pet->email); ?></small>
+                        </td>
+                        <td><?php echo date('d/m/Y', strtotime($pet->created_at)); ?></td>
+                        <td>
+                            <a href="<?php echo admin_url('admin.php?page=pet-form-add&edit=' . $pet->id); ?>" 
+                               class="button button-small">
+                                Editar
+                            </a>
+                            <a href="<?php echo wp_nonce_url(admin_url('admin.php?page=pet-form-list&action=delete&pet_id=' . $pet->id), 'delete_pet_' . $pet->id); ?>" 
+                               onclick="return confirm('¿Está seguro de eliminar esta mascota?')" 
+                               class="button button-small" style="margin-left: 5px;">
+                                Eliminar
+                            </a>
+                        </td>
+                    </tr>
+                    <?php endforeach; ?>
+                </tbody>
+            </table>
+            
+            <?php if ($total_pages > 1): ?>
+                <div class="tablenav bottom">
+                    <div class="tablenav-pages">
+                        <?php
+                        echo paginate_links(array(
+                            'base' => add_query_arg('paged', '%#%'),
+                            'format' => '',
+                            'prev_text' => '&laquo;',
+                            'next_text' => '&raquo;',
+                            'total' => $total_pages,
+                            'current' => $current_page
+                        ));
+                        ?>
+                    </div>
+                </div>
+            <?php endif; ?>
+        <?php endif; ?>
+    </div>
+    <?php
+}
+
+/**
+ * Página para agregar/editar mascotas
+ */
+function pet_form_add_page() {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'pets';
+    
+    $edit_mode = false;
+    $pet_data = null;
+    
+    // Verificar si estamos editando
+    if (isset($_GET['edit']) && !empty($_GET['edit'])) {
+        $pet_id = intval($_GET['edit']);
+        $pet_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $pet_id));
+        if ($pet_data) {
+            $edit_mode = true;
+        }
+    }
+    
+    // Procesar envío del formulario
+    if (isset($_POST['submit_pet']) && check_admin_referer('pet_form_admin_nonce')) {
+        $pet_name = sanitize_text_field($_POST['pet_name']);
+        $breed = sanitize_text_field($_POST['breed']);
+        $sex = sanitize_text_field($_POST['sex']);
+        $age = intval($_POST['age']);
+        $age_type = sanitize_text_field($_POST['age_type']);
+        $natural_food = sanitize_text_field($_POST['natural_food']);
+        $activity_level = sanitize_text_field($_POST['activity_level']);
+        $reproductive_state = sanitize_text_field($_POST['reproductive_state']);
+        $body_condition = sanitize_text_field($_POST['body_condition']);
+        $weight = floatval($_POST['weight']);
+        $allergies = sanitize_text_field($_POST['allergies']);
+        $special_needs = sanitize_text_field($_POST['special_needs']);
+        $owner_name = sanitize_text_field($_POST['owner_name']);
+        $email = sanitize_email($_POST['email']);
+        
+        // Calcular campos derivados
+        $life_stage = get_life_stage($age, $age_type);
+        $factor = get_nutrition_factor_value($life_stage, $body_condition, $reproductive_state, $activity_level);
+        $daily_nutrition = ($factor) ? calculate_daily_nutrition($weight, $factor) : 0;
+        
+        $data = array(
+            'pet_name' => $pet_name,
+            'breed' => $breed,
+            'sex' => $sex,
+            'age' => $age,
+            'age_type' => $age_type,
+            'natural_food' => $natural_food,
+            'activity_level' => $activity_level,
+            'reproductive_state' => $reproductive_state,
+            'body_condition' => $body_condition,
+            'weight' => $weight,
+            'allergies' => $allergies,
+            'special_needs' => $special_needs,
+            'owner_name' => $owner_name,
+            'email' => $email,
+            'life_stage' => $life_stage,
+            'nutrition_factor' => $factor,
+            'daily_nutrition' => $daily_nutrition
+        );
+        
+        if ($edit_mode && $pet_data) {
+            // Actualizar
+            $result = $wpdb->update(
+                $table_name,
+                $data,
+                array('id' => $pet_data->id),
+                array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%f', '%f'),
+                array('%d')
+            );
+            if ($result !== false) {
+                echo '<div class="notice notice-success"><p>Mascota actualizada correctamente.</p></div>';
+                $pet_data = $wpdb->get_row($wpdb->prepare("SELECT * FROM $table_name WHERE id = %d", $pet_data->id));
+            } else {
+                echo '<div class="notice notice-error"><p>Error al actualizar la mascota.</p></div>';
+            }
+        } else {
+            // Insertar nueva
+            $result = $wpdb->insert(
+                $table_name,
+                $data,
+                array('%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%f', '%s', '%s', '%s', '%s', '%s', '%f', '%f')
+            );
+            if ($result !== false) {
+                echo '<div class="notice notice-success"><p>Mascota registrada correctamente.</p></div>';
+                wp_redirect(admin_url('admin.php?page=pet-form-list'));
+                exit;
+            } else {
+                echo '<div class="notice notice-error"><p>Error al registrar la mascota.</p></div>';
+            }
+        }
+    }
+    
+    // Obtener razas
+    $breeds = get_dog_breeds_list();
+    
+    ?>
+    <div class="wrap">
+        <h1><?php echo $edit_mode ? 'Editar Mascota' : 'Agregar Nueva Mascota'; ?></h1>
+        
+        <form method="post" action="">
+            <?php wp_nonce_field('pet_form_admin_nonce'); ?>
+            
+            <table class="form-table">
+                <tr>
+                    <th scope="row"><label for="pet_name">Nombre de la Mascota *</label></th>
+                    <td><input type="text" id="pet_name" name="pet_name" value="<?php echo $pet_data ? esc_attr($pet_data->pet_name) : ''; ?>" required class="regular-text"></td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="breed">Raza *</label></th>
+                    <td>
+                        <select id="breed" name="breed" required>
+                            <option value="">Seleccionar raza...</option>
+                            <?php foreach ($breeds as $breed): ?>
+                                <option value="<?php echo esc_attr($breed['value']); ?>" <?php echo ($pet_data && $pet_data->breed === $breed['value']) ? 'selected' : ''; ?>>
+                                    <?php echo esc_html($breed['label']); ?>
+                                </option>
+                            <?php endforeach; ?>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="sex">Sexo *</label></th>
+                    <td>
+                        <select id="sex" name="sex" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="hembra" <?php echo ($pet_data && $pet_data->sex === 'hembra') ? 'selected' : ''; ?>>Hembra</option>
+                            <option value="macho" <?php echo ($pet_data && $pet_data->sex === 'macho') ? 'selected' : ''; ?>>Macho</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="age">Edad *</label></th>
+                    <td>
+                        <input type="number" id="age" name="age" value="<?php echo $pet_data ? esc_attr($pet_data->age) : ''; ?>" required min="0" style="width: 80px;">
+                        <select id="age_type" name="age_type" style="width: 100px; margin-left: 10px;">
+                            <option value="años" <?php echo ($pet_data && $pet_data->age_type === 'años') ? 'selected' : ''; ?>>Años</option>
+                            <option value="meses" <?php echo ($pet_data && $pet_data->age_type === 'meses') ? 'selected' : ''; ?>>Meses</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="natural_food">¿Alimentación natural? *</label></th>
+                    <td>
+                        <select id="natural_food" name="natural_food" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="yes" <?php echo ($pet_data && $pet_data->natural_food === 'yes') ? 'selected' : ''; ?>>Sí</option>
+                            <option value="no" <?php echo ($pet_data && $pet_data->natural_food === 'no') ? 'selected' : ''; ?>>No</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="activity_level">Nivel de Actividad *</label></th>
+                    <td>
+                        <select id="activity_level" name="activity_level" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Sedentario" <?php echo ($pet_data && $pet_data->activity_level === 'Sedentario') ? 'selected' : ''; ?>>Sedentario</option>
+                            <option value="Activo" <?php echo ($pet_data && $pet_data->activity_level === 'Activo') ? 'selected' : ''; ?>>Activo</option>
+                            <option value="Muy activo" <?php echo ($pet_data && $pet_data->activity_level === 'Muy activo') ? 'selected' : ''; ?>>Muy activo</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="reproductive_state">Estado Reproductivo *</label></th>
+                    <td>
+                        <select id="reproductive_state" name="reproductive_state" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Castrado" <?php echo ($pet_data && $pet_data->reproductive_state === 'Castrado') ? 'selected' : ''; ?>>Castrado</option>
+                            <option value="Entero" <?php echo ($pet_data && $pet_data->reproductive_state === 'Entero') ? 'selected' : ''; ?>>Entero</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="body_condition">Condición Física *</label></th>
+                    <td>
+                        <select id="body_condition" name="body_condition" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="Muy delgado" <?php echo ($pet_data && $pet_data->body_condition === 'Muy delgado') ? 'selected' : ''; ?>>Muy delgado</option>
+                            <option value="Delgado" <?php echo ($pet_data && $pet_data->body_condition === 'Delgado') ? 'selected' : ''; ?>>Delgado</option>
+                            <option value="Normal" <?php echo ($pet_data && $pet_data->body_condition === 'Normal') ? 'selected' : ''; ?>>Normal</option>
+                            <option value="Obeso" <?php echo ($pet_data && $pet_data->body_condition === 'Obeso') ? 'selected' : ''; ?>>Obeso</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="weight">Peso (kg) *</label></th>
+                    <td><input type="number" id="weight" name="weight" value="<?php echo $pet_data ? esc_attr($pet_data->weight) : ''; ?>" required step="0.1" min="0.1" class="regular-text"></td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="allergies">Alergias *</label></th>
+                    <td>
+                        <select id="allergies" name="allergies" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="ninguna" <?php echo ($pet_data && $pet_data->allergies === 'ninguna') ? 'selected' : ''; ?>>Ninguna</option>
+                            <option value="pollo" <?php echo ($pet_data && $pet_data->allergies === 'pollo') ? 'selected' : ''; ?>>Pollo</option>
+                            <option value="res" <?php echo ($pet_data && $pet_data->allergies === 'res') ? 'selected' : ''; ?>>Res</option>
+                            <option value="cerdo" <?php echo ($pet_data && $pet_data->allergies === 'cerdo') ? 'selected' : ''; ?>>Cerdo</option>
+                            <option value="pescado" <?php echo ($pet_data && $pet_data->allergies === 'pescado') ? 'selected' : ''; ?>>Pescado</option>
+                            <option value="lacteos" <?php echo ($pet_data && $pet_data->allergies === 'lacteos') ? 'selected' : ''; ?>>Lácteos</option>
+                            <option value="gluten" <?php echo ($pet_data && $pet_data->allergies === 'gluten') ? 'selected' : ''; ?>>Gluten</option>
+                            <option value="otro" <?php echo ($pet_data && $pet_data->allergies === 'otro') ? 'selected' : ''; ?>>Otro</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="special_needs">Necesidades Especiales *</label></th>
+                    <td>
+                        <select id="special_needs" name="special_needs" required>
+                            <option value="">Seleccionar...</option>
+                            <option value="ninguna" <?php echo ($pet_data && $pet_data->special_needs === 'ninguna') ? 'selected' : ''; ?>>Ninguna</option>
+                            <option value="diabetes" <?php echo ($pet_data && $pet_data->special_needs === 'diabetes') ? 'selected' : ''; ?>>Diabetes</option>
+                            <option value="renal" <?php echo ($pet_data && $pet_data->special_needs === 'renal') ? 'selected' : ''; ?>>Enfermedad renal</option>
+                            <option value="hepatica" <?php echo ($pet_data && $pet_data->special_needs === 'hepatica') ? 'selected' : ''; ?>>Enfermedad hepática</option>
+                            <option value="cardiaca" <?php echo ($pet_data && $pet_data->special_needs === 'cardiaca') ? 'selected' : ''; ?>>Enfermedad cardíaca</option>
+                            <option value="artritis" <?php echo ($pet_data && $pet_data->special_needs === 'artritis') ? 'selected' : ''; ?>>Artritis</option>
+                            <option value="sobrepeso" <?php echo ($pet_data && $pet_data->special_needs === 'sobrepeso') ? 'selected' : ''; ?>>Sobrepeso</option>
+                            <option value="digestiva" <?php echo ($pet_data && $pet_data->special_needs === 'digestiva') ? 'selected' : ''; ?>>Problemas digestivos</option>
+                            <option value="otro" <?php echo ($pet_data && $pet_data->special_needs === 'otro') ? 'selected' : ''; ?>>Otro</option>
+                        </select>
+                    </td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="owner_name">Nombre del Propietario *</label></th>
+                    <td><input type="text" id="owner_name" name="owner_name" value="<?php echo $pet_data ? esc_attr($pet_data->owner_name) : ''; ?>" required class="regular-text"></td>
+                </tr>
+                
+                <tr>
+                    <th scope="row"><label for="email">Email *</label></th>
+                    <td><input type="email" id="email" name="email" value="<?php echo $pet_data ? esc_attr($pet_data->email) : ''; ?>" required class="regular-text"></td>
+                </tr>
+            </table>
+            
+            <p class="submit">
+                <input type="submit" name="submit_pet" class="button-primary" value="<?php echo $edit_mode ? 'Actualizar Mascota' : 'Registrar Mascota'; ?>">
+                <a href="<?php echo admin_url('admin.php?page=pet-form-list'); ?>" class="button">Cancelar</a>
+            </p>
+        </form>
+    </div>
+    <?php
+}
+
+/**
+ * Funciones auxiliares para cálculos
+ */
+function get_life_stage($age, $age_type) {
+    $total_months = ($age_type === 'años') ? ($age * 12) : $age;
+    
+    if ($total_months <= 12) {
+        return 'Cachorro';
+    } elseif ($total_months <= 96) {
+        return 'Adulto';
+    } else {
+        return 'Senior';
+    }
+}
+
+function get_nutrition_factor_value($life_stage, $body_condition, $reproductive_state, $activity_level) {
+    global $wpdb;
+    $table_name = $wpdb->prefix . 'nutrition_factors';
+    
+    $factor = $wpdb->get_var($wpdb->prepare(
+        "SELECT factor FROM $table_name WHERE life_stage = %s AND body_condition = %s AND reproductive_state = %s AND activity_level = %s",
+        $life_stage, $body_condition, $reproductive_state, $activity_level
+    ));
+    
+    return $factor ? floatval($factor) : null;
+}
+
+function calculate_daily_nutrition($weight, $factor) {
+    return round((pow($weight, 0.75) * 70 * $factor) / 1.5, 2);
 }
 
 /**
@@ -522,15 +976,15 @@ function nutrition_factors_admin_page() {
 /**
  * Página de configuración
  */
-function nutrition_settings_admin_page() {
+function pet_form_settings_page() {
     ?>
     <div class="wrap">
-        <h1>Configuración de la Calculadora</h1>
+        <h1>Configuración del Formulario de Mascotas</h1>
         
-        <div class="nutrition-settings">
+        <div class="pet-form-settings">
             <h2>Información del Plugin</h2>
-            <p><strong>Versión:</strong> <?php echo NUTRITION_CALCULATOR_VERSION; ?></p>
-            <p><strong>Shortcode:</strong> [nutrition-calculator]</p>
+            <p><strong>Versión:</strong> <?php echo PET_FORM_VERSION; ?></p>
+            <p><strong>Shortcode:</strong> [pet-form]</p>
             
             <h2>Configuración de Edad</h2>
             <table class="form-table">
@@ -545,14 +999,286 @@ function nutrition_settings_admin_page() {
             </table>
             
             <h2>Uso del Bloque</h2>
-            <p>Para usar la calculadora nutricional:</p>
+            <p>Para usar el formulario de mascotas:</p>
             <ol>
                 <li>Ve al editor de WordPress (Gutenberg)</li>
-                <li>Busca el bloque "Calculadora Nutricional"</li>
+                <li>Busca el bloque "Formulario de Mascota"</li>
                 <li>Añádelo a tu página o entrada</li>
                 <li>Guarda y publica</li>
             </ol>
+            
+            <h2>Funcionalidades</h2>
+            <ul>
+                <li>✅ Formulario multi-paso para registro de mascotas</li>
+                <li>✅ Cálculo automático de necesidades nutricionales</li>
+                <li>✅ Gestión de razas de perros</li>
+                <li>✅ Factores nutricionales configurables</li>
+                <li>✅ Lista y gestión de mascotas registradas</li>
+                <li>✅ Validación completa de formularios</li>
+            </ul>
         </div>
+    </div>
+    <?php
+}
+
+/**
+ * Página de gestión de razas
+ */
+function pet_form_breeds_management_page() {
+    // Manejar descarga de razas
+    if (isset($_GET['download_breeds'])) {
+        $breeds = get_terms(array(
+            'taxonomy' => 'dog_breed',
+            'hide_empty' => false,
+            'orderby' => 'name',
+            'order' => 'ASC'
+        ));
+        
+        $content = '';
+        foreach ($breeds as $breed) {
+            $content .= $breed->name . "\n";
+        }
+        
+        header('Content-Type: text/plain');
+        header('Content-Disposition: attachment; filename="razas-perros-' . date('Y-m-d') . '.txt"');
+        header('Content-Length: ' . strlen($content));
+        echo $content;
+        exit;
+    }
+    
+    // Procesar acciones
+    $message = '';
+    $error = '';
+    
+    // Importar desde archivo TXT
+    if (isset($_POST['import_breeds']) && check_admin_referer('breed_management_nonce')) {
+        if (isset($_FILES['breeds_file']) && $_FILES['breeds_file']['error'] === UPLOAD_ERR_OK) {
+            $file_content = file_get_contents($_FILES['breeds_file']['tmp_name']);
+            if ($file_content !== false) {
+                $breeds = array_filter(array_map('trim', explode("\n", $file_content)));
+                $imported = 0;
+                $skipped = 0;
+                
+                foreach ($breeds as $breed_name) {
+                    if (!empty($breed_name) && !term_exists($breed_name, 'dog_breed')) {
+                        $result = wp_insert_term($breed_name, 'dog_breed');
+                        if (!is_wp_error($result)) {
+                            $imported++;
+                        }
+                    } else {
+                        $skipped++;
+                    }
+                }
+                
+                $message = "Importación completada: $imported razas agregadas, $skipped omitidas (ya existían o estaban vacías).";
+            } else {
+                $error = 'Error al leer el archivo.';
+            }
+        } else {
+            $error = 'Error al subir el archivo.';
+        }
+    }
+    
+    // Agregar raza individual
+    if (isset($_POST['add_single_breed']) && check_admin_referer('breed_management_nonce')) {
+        $breed_name = trim(sanitize_text_field($_POST['breed_name']));
+        if (!empty($breed_name)) {
+            if (!term_exists($breed_name, 'dog_breed')) {
+                $result = wp_insert_term($breed_name, 'dog_breed');
+                if (!is_wp_error($result)) {
+                    $message = "Raza '$breed_name' agregada correctamente.";
+                } else {
+                    $error = 'Error al agregar la raza: ' . $result->get_error_message();
+                }
+            } else {
+                $error = "La raza '$breed_name' ya existe.";
+            }
+        } else {
+            $error = 'El nombre de la raza no puede estar vacío.';
+        }
+    }
+    
+    // Eliminar todas las razas
+    if (isset($_POST['delete_all_breeds']) && check_admin_referer('breed_management_nonce')) {
+        $terms = get_terms(array('taxonomy' => 'dog_breed', 'hide_empty' => false));
+        $deleted = 0;
+        foreach ($terms as $term) {
+            if (wp_delete_term($term->term_id, 'dog_breed')) {
+                $deleted++;
+            }
+        }
+        $message = "$deleted razas eliminadas.";
+    }
+    
+    // Obtener razas actuales
+    $current_breeds = get_terms(array(
+        'taxonomy' => 'dog_breed',
+        'hide_empty' => false,
+        'orderby' => 'name',
+        'order' => 'ASC'
+    ));
+    
+    ?>
+    <div class="wrap">
+        <h1>Gestión de Razas de Perros</h1>
+        
+        <?php if ($message): ?>
+            <div class="notice notice-success"><p><?php echo esc_html($message); ?></p></div>
+        <?php endif; ?>
+        
+        <?php if ($error): ?>
+            <div class="notice notice-error"><p><?php echo esc_html($error); ?></p></div>
+        <?php endif; ?>
+        
+        <div class="breed-management-container">
+            <!-- Importar desde archivo TXT -->
+            <div class="breed-section">
+                <h2>Importar Razas desde Archivo TXT</h2>
+                <form method="post" enctype="multipart/form-data">
+                    <?php wp_nonce_field('breed_management_nonce'); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">Archivo TXT</th>
+                            <td>
+                                <input type="file" name="breeds_file" accept=".txt" required>
+                                <p class="description">
+                                    Selecciona un archivo .txt con una raza por línea.<br>
+                                    <strong>Formato:</strong> Cada línea debe contener el nombre de una raza.
+                                </p>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <p class="submit">
+                        <input type="submit" name="import_breeds" class="button-primary" value="Importar Razas">
+                    </p>
+                </form>
+            </div>
+            
+            <!-- Agregar raza individual -->
+            <div class="breed-section">
+                <h2>Agregar Raza Individual</h2>
+                <form method="post">
+                    <?php wp_nonce_field('breed_management_nonce'); ?>
+                    <table class="form-table">
+                        <tr>
+                            <th scope="row">Nombre de la Raza</th>
+                            <td>
+                                <input type="text" name="breed_name" class="regular-text" placeholder="Ej: Pastor Alemán" required>
+                                <p class="description">Ingresa el nombre completo de la raza.</p>
+                            </td>
+                        </tr>
+                    </table>
+                    
+                    <p class="submit">
+                        <input type="submit" name="add_single_breed" class="button-primary" value="Agregar Raza">
+                    </p>
+                </form>
+            </div>
+            
+            <!-- Acciones adicionales -->
+            <div class="breed-section">
+                <h2>Acciones Adicionales</h2>
+                
+                <p>
+                    <a href="<?php echo admin_url('edit-tags.php?taxonomy=dog_breed&post_type=pet'); ?>" class="button">
+                        Gestionar Razas (WordPress Nativo)
+                    </a>
+                </p>
+                
+                <p>
+                    <a href="<?php echo admin_url('admin.php?page=pet-form-breeds&download_breeds=1'); ?>" class="button">
+                        Descargar Razas Actuales (.txt)
+                    </a>
+                </p>
+                
+                <form method="post" style="display: inline;">
+                    <?php wp_nonce_field('breed_management_nonce'); ?>
+                    <input type="submit" name="delete_all_breeds" class="button button-secondary" 
+                           value="Eliminar Todas las Razas" 
+                           onclick="return confirm('¿Estás seguro de eliminar TODAS las razas? Esta acción no se puede deshacer.')">
+                </form>
+            </div>
+            
+            <!-- Lista de razas actuales -->
+            <div class="breed-section">
+                <h2>Razas Actuales (<?php echo count($current_breeds); ?>)</h2>
+                
+                <?php if (!empty($current_breeds)): ?>
+                    <div class="breeds-grid">
+                        <?php foreach ($current_breeds as $breed): ?>
+                            <div class="breed-item">
+                                <span class="breed-name"><?php echo esc_html($breed->name); ?></span>
+                                <span class="breed-count">(<?php echo $breed->count; ?>)</span>
+                                <a href="<?php echo admin_url('edit-tags.php?action=edit&taxonomy=dog_breed&tag_ID=' . $breed->term_id . '&post_type=pet'); ?>" 
+                                   class="breed-edit">Editar</a>
+                            </div>
+                        <?php endforeach; ?>
+                    </div>
+                <?php else: ?>
+                    <p>No hay razas registradas. Usa las opciones superiores para agregar razas.</p>
+                <?php endif; ?>
+            </div>
+        </div>
+        
+        <style>
+        .breed-management-container {
+            max-width: 1200px;
+        }
+        
+        .breed-section {
+            background: #fff;
+            border: 1px solid #ccd0d4;
+            margin-bottom: 20px;
+            padding: 20px;
+        }
+        
+        .breed-section h2 {
+            margin-top: 0;
+            border-bottom: 1px solid #ddd;
+            padding-bottom: 10px;
+        }
+        
+        .breeds-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 10px;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 15px;
+        }
+        
+        .breed-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 8px 12px;
+            background: #f9f9f9;
+            border-radius: 4px;
+        }
+        
+        .breed-name {
+            font-weight: 500;
+            flex-grow: 1;
+        }
+        
+        .breed-count {
+            color: #666;
+            font-size: 0.9em;
+            margin-right: 10px;
+        }
+        
+        .breed-edit {
+            color: #0073aa;
+            text-decoration: none;
+            font-size: 0.9em;
+        }
+        
+        .breed-edit:hover {
+            text-decoration: underline;
+        }
+        </style>
     </div>
     <?php
 }
@@ -560,7 +1286,7 @@ function nutrition_settings_admin_page() {
 /**
  * Registrar endpoints de la API REST
  */
-function nutrition_calculator_register_rest_routes() {
+function pet_form_register_rest_routes() {
     // Endpoint para obtener factores nutricionales
     register_rest_route('nutrition-calculator/v1', '/factors', array(
         'methods' => 'GET',
@@ -568,10 +1294,10 @@ function nutrition_calculator_register_rest_routes() {
         'permission_callback' => '__return_true'
     ));
     
-    // Endpoint para guardar cálculo
-    register_rest_route('nutrition-calculator/v1', '/calculate', array(
+    // Endpoint para enviar formulario
+    register_rest_route('pet-form/v1', '/submit', array(
         'methods' => 'POST',
-        'callback' => 'save_nutrition_calculation_rest',
+        'callback' => 'submit_pet_form_rest',
         'permission_callback' => '__return_true'
     ));
     
@@ -582,7 +1308,7 @@ function nutrition_calculator_register_rest_routes() {
         'permission_callback' => '__return_true'
     ));
 }
-add_action('rest_api_init', 'nutrition_calculator_register_rest_routes');
+add_action('rest_api_init', 'pet_form_register_rest_routes');
 
 /**
  * Obtener factores nutricionales via REST
@@ -603,17 +1329,60 @@ function get_nutrition_factors_rest($request) {
 }
 
 /**
- * Guardar cálculo nutricional via REST
+ * Procesar envío del formulario via REST
  */
-function save_nutrition_calculation_rest($request) {
+function submit_pet_form_rest($request) {
+    global $wpdb;
+    
     $data = $request->get_json_params();
     
-    // Aquí puedes guardar el cálculo en la base de datos si lo deseas
-    // Por ahora solo retornamos success
+    // Validar datos requeridos
+    $required_fields = ['petName', 'breed', 'sex', 'age', 'ageType', 'naturalFood', 'activityLevel', 'reproductiveState', 'bodyCondition', 'weight', 'allergies', 'specialNeeds', 'ownerName', 'email'];
+    
+    foreach ($required_fields as $field) {
+        if (empty($data[$field])) {
+            return new WP_Error('missing_field', 'Campo requerido faltante: ' . $field, array('status' => 400));
+        }
+    }
+    
+    // Insertar en la base de datos
+    $table_name = $wpdb->prefix . 'pets';
+    
+    $result = $wpdb->insert(
+        $table_name,
+        array(
+            'pet_name' => sanitize_text_field($data['petName']),
+            'breed' => sanitize_text_field($data['breed']),
+            'sex' => sanitize_text_field($data['sex']),
+            'age' => intval($data['age']),
+            'age_type' => sanitize_text_field($data['ageType']),
+            'natural_food' => sanitize_text_field($data['naturalFood']),
+            'activity_level' => sanitize_text_field($data['activityLevel']),
+            'reproductive_state' => sanitize_text_field($data['reproductiveState']),
+            'body_condition' => sanitize_text_field($data['bodyCondition']),
+            'weight' => floatval($data['weight']),
+            'allergies' => sanitize_text_field($data['allergies']),
+            'special_needs' => sanitize_text_field($data['specialNeeds']),
+            'owner_name' => sanitize_text_field($data['ownerName']),
+            'email' => sanitize_email($data['email']),
+            'life_stage' => sanitize_text_field($data['lifeStage']),
+            'nutrition_factor' => floatval($data['factor']),
+            'daily_nutrition' => floatval($data['dailyNutrition'])
+        ),
+        array(
+            '%s', '%s', '%s', '%d', '%s', '%s', '%s', '%s', '%s', '%f', 
+            '%s', '%s', '%s', '%s', '%s', '%f', '%f'
+        )
+    );
+    
+    if ($result === false) {
+        return new WP_Error('db_error', 'Error al guardar en la base de datos', array('status' => 500));
+    }
     
     return rest_ensure_response(array(
         'success' => true,
-        'message' => 'Cálculo guardado correctamente'
+        'message' => 'Mascota registrada correctamente',
+        'pet_id' => $wpdb->insert_id
     ));
 }
 
@@ -625,13 +1394,12 @@ function get_dog_breeds_rest($request) {
 }
 
 /**
- * Agregar shortcode para la calculadora
+ * Agregar shortcode para el formulario
  */
-function nutrition_calculator_shortcode($atts) {
-    wp_enqueue_script('nutrition-calculator-editor');
-    wp_enqueue_style('nutrition-calculator-style');
+function pet_form_shortcode($atts) {
+    wp_enqueue_script('pet-form-editor');
+    wp_enqueue_style('pet-form-style');
     
-    return '<div id="nutrition-calculator-block"></div>';
+    return '<div id="pet-form-block"></div>';
 }
-add_shortcode('nutrition-calculator', 'nutrition_calculator_shortcode');
-?> 
+add_shortcode('pet-form', 'pet_form_shortcode');
